@@ -34,6 +34,7 @@ void GameScene::Initialize() {
 	camera_.farZ = 550.0f;
 	camera_.Initialize();
 
+	// マップチップフィールドの生成、初期化
 	// マップチップフィールドの生成
 	mapChipField_ = new MapChipField;
 
@@ -58,6 +59,9 @@ void GameScene::Initialize() {
 
 	// プレイヤーの初期化
 	player_->Intialize(model_, &camera_, playerPos);
+
+	// マップチップデータのセット
+	player_->SetMapChipField(mapChipField_);
 
 	// 天球の生成、初期化
 	// 天球の3Dモデルの生成

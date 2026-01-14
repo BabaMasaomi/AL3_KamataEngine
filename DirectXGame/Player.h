@@ -2,6 +2,9 @@
 #include "KamataEngine.h"
 #include "Transform.h"
 
+// 前方宣言
+class MapChipField;
+
 // 左右の向き
 enum class LRDirection {
 	kRight,
@@ -9,6 +12,83 @@ enum class LRDirection {
 };
 
 class Player {
+private:
+	// Translateクラス内の関数を使える様にする
+	Transform transform_;
+
+	// マップチップによるフィールド
+	MapChipField* mapChipField_ = nullptr;
+
+	// カメラ
+	KamataEngine::Camera* camera_ = nullptr;
+
+	// ワールド変換データ
+	KamataEngine::WorldTransform worldTransform_;
+
+	// モデル
+	KamataEngine::Model* model_ = nullptr;
+
+	// 以下、移動などに使う変数をまとめる
+	KamataEngine::Vector3 velocity_ = {};
+
+	// 左右移動の加速度
+	static inline const float kAcceleration = 0.025f;
+
+	// 移動減衰の基本の値
+	static inline const float kAttenuation = 0.09f;
+
+	// 制限速度
+	static inline const float kLimitRunSpeed = 1.5f;
+
+	// 左右の向き
+	LRDirection lrDirection_ = LRDirection::kRight;
+
+	// 接地フラグ
+	bool onGround_ = true;
+
+	// 重力加速度
+	static inline const float kGravityAcceleration = 0.09f;
+
+	// 最大落下速度
+	static inline const float kLimitFallSpeed_ = 1.0f;
+
+	// ジャンプ初速
+	static inline const float kJumpAcceleration_ = 1.0f;
+
+	// キャラクターの当たり判定サイズ
+	static inline const float kWidth = 0.8f;
+	static inline const float kHeight = 0.8f;
+
+	// マップとの当たり判定情報
+	struct CollisionMapInfo {
+		bool isCeilingCollide = false;               // 天井衝突フラグ
+		bool isLanding = false;                      // 着地フラグ
+		bool isWallCollide = false;                  // 壁衝突フラグ
+		KamataEngine::Vector3 MovementAmount = {}; // 移動量
+	};
+
+	// 角
+	enum Corner {
+		kRightBottom, // 右下
+		kLeftBottom,  // 左下
+		kRightTop,    // 右上
+		kLeftTop,     // 左上
+
+		kNumCorner // 要素数
+	};
+
+	// ブロックとの間にとる余白
+	static inline const float kBlank = 0.2f;
+
+	// 旋回開始の角度
+	float turnFirstRotationY_ = 0.0f;
+
+	// 旋回タイマー
+	float turnTimer_ = 0.0f;
+
+	// 旋回時間(秒)
+	static inline const float kTimeTurn = 0.3f;
+
 public:
 	// コンストラクタ&デストラクタ
 	Player();
@@ -31,6 +111,37 @@ public:
 	/// </summary>
 	void Draw();
 
+	/// <summary>
+	/// マップ衝突判定
+	/// </summary>
+	/// <param name="info">マップとの当たり判定情報</param>
+	void MapCollisionCheck(CollisionMapInfo& info);
+
+	/// <summary>
+	/// 指定した角の座標計算
+	/// </summary>
+	/// <param name="center">指定したい角の矩形の中心座標</param>
+	/// <param name="corner">指定した角</param>
+	KamataEngine::Vector3 CornerPosition(const KamataEngine::Vector3& center, Corner corner);
+
+	// 方向別のマップ衝突判定
+	void MapCollisionCheckTop(CollisionMapInfo& info);
+	/*void MapCollisionCheckBottom(CollisionMapInfo& info);
+	void MapCollisionCheckRight(CollisionMapInfo& info);
+	void MapCollisionCheckLeft(CollisionMapInfo& info);*/
+
+	/// <summary>
+	/// 判定結果を反映させて移動させる
+	/// </summary>
+	/// <param name="info">マップとの当たり判定情報</param>
+	void MoveReflectingResult(const CollisionMapInfo& info);
+
+	/// <summary>
+	/// 天井に接触している時の処理
+	/// </summary>
+	/// <param name="info">マップとの当たり判定情報</param>
+	void ContactWithCeiling(const CollisionMapInfo& info);
+
 	// Gettterを用意する(追従カメラのために必要)
 	// 平行移動した位置
 	KamataEngine::WorldTransform& GetWorldTransform() { return worldTransform_; }
@@ -38,52 +149,7 @@ public:
 	// 速度
 	const KamataEngine::Vector3& GetVeloctiy() const { return velocity_; }
 
-private:
-	// カメラ
-	KamataEngine::Camera* camera_ = nullptr;
-
-	// ワールド変換データ
-	KamataEngine::WorldTransform worldTransform_;
-
-	// Translateクラス内の関数を使える様にする
-	Transform transform_;
-
-	// モデル
-	KamataEngine::Model* model_ = nullptr;
-
-	// 以下、移動などに使う変数をまとめる
-	KamataEngine::Vector3 velocity_ = {};
-
-	// 左右移動の加速度
-	static inline const float kAcceleration = 0.025f;
-
-	// 移動減衰の基本の値
-	static inline const float kAttenuation = 0.09f;
-
-	// 制限速度
-	static inline const float kLimitRunSpeed = 1.5f;
-
-	// 左右の向き
-	LRDirection lrDirection_ = LRDirection::kRight;
-
-	// 旋回開始の角度
-	float turnFirstRotationY_ = 0.0f;
-
-	// 旋回タイマー
-	float turnTimer_ = 0.0f;
-
-	// 旋回時間(秒)
-	static inline const float kTimeTurn = 0.3f;
-
-	// 接地フラグ
-	bool onGround_ = true;
-
-	// 重力加速度
-	static inline const float kGravityAcceleration = 0.09f;
-
-	// 最大落下速度
-	static inline const float kLimitFallSpeed_ = 1.0f;
-
-	// ジャンプ初速
-	static inline const float kJumpAcceleration_ = 1.0f;
+	// セッター
+	// マップチップ情報
+	void SetMapChipField(MapChipField* mapChipField) { mapChipField_ = mapChipField; }
 };

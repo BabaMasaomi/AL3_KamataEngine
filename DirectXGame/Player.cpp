@@ -1,5 +1,6 @@
 ﻿#define NOMINMAX
 #include "Player.h"
+#include "MapChipField.h"
 #include <algorithm>
 #include <cassert>
 #include <numbers>
@@ -40,40 +41,7 @@ void Player::Intialize(Model* model, Camera* camera, const Vector3 pos) {
 /// 自機の更新
 /// </summary>
 void Player::Update() {
-
-	// 着地フラグ
-	bool landing = false;
-
-	// 地面との当たり判定
-	// 降下中か
-	if (velocity_.y < 0) {
-		// Y座標が地面以下になったら着地
-		if (worldTransform_.translation_.y <= 2.0f) {
-			landing = true;
-		}
-	}
-
-	// 接地判定
-	if (onGround_) {
-		if (velocity_.y > 0.0f) {
-			// 空中状態に移行
-			onGround_ = false;
-		}
-
-	} else {
-		// 着地
-		if (landing) {
-			// めり込み対策
-			worldTransform_.translation_.y = 2.0f;
-			// 摩擦で横方向の速度が減衰
-			velocity_.x *= (1.0f - kAttenuation);
-			// 下方向速度をリセット
-			velocity_.y = 0.0f;
-			// 接地状態に移行
-			onGround_ = true;
-		}
-	}
-
+	/*========== ①移動入力 ==========*/
 	// 接地している時
 	if (onGround_) {
 		// 移動入力
@@ -146,11 +114,59 @@ void Player::Update() {
 		velocity_.y = std::max(velocity_.y, -kLimitFallSpeed_);
 	}
 
-	// 移動
-	worldTransform_.translation_.x += velocity_.x;
-	worldTransform_.translation_.y += velocity_.y;
+	/*========== ②移動量を加味して衝突判定する ==========*/
+	// 衝突情報を初期化
+	CollisionMapInfo collisionMapInfo;
+	// 移動量に速度の値をコピー
+	collisionMapInfo.MovementAmount = velocity_;
 
-	// 旋回制御
+	// マップ衝突チェック
+	MapCollisionCheck(collisionMapInfo);
+
+	/*========== ③判定結果を反映して移動 ==========*/
+	MoveReflectingResult(collisionMapInfo);
+
+	/*========== ④天井に接触している時の処理 ==========*/
+	ContactWithCeiling(collisionMapInfo);
+
+	/*========== ⑤壁に接触している時の処理 ==========*/
+
+
+	/*========== ⑥接地状態の切り替え ==========*/
+	// 着地フラグ
+	bool landing = false;
+
+	// 地面との当たり判定
+	// 降下中か
+	if (velocity_.y < 0) {
+		// Y座標が地面以下になったら着地
+		if (worldTransform_.translation_.y <= 2.0f) {
+			landing = true;
+		}
+	}
+
+	// 接地判定
+	if (onGround_) {
+		if (velocity_.y > 0.0f) {
+			// 空中状態に移行
+			onGround_ = false;
+		}
+
+	} else {
+		// 着地
+		if (landing) {
+			// めり込み対策
+			worldTransform_.translation_.y = 2.0f;
+			// 摩擦で横方向の速度が減衰
+			velocity_.x *= (1.0f - kAttenuation);
+			// 下方向速度をリセット
+			velocity_.y = 0.0f;
+			// 接地状態に移行
+			onGround_ = true;
+		}
+	}
+
+	/*========== ⑦旋回制御 ==========*/
 	if (turnTimer_ > 0.0f) {
 		// 旋回タイマーを1/60秒だけカウントダウン
 		turnTimer_ -= 1.0f / 60.0f;
@@ -176,6 +192,7 @@ void Player::Update() {
 		worldTransform_.rotation_.y = turnFirstRotationY_ + (destinationRotationY - turnFirstRotationY_) * easeT;
 	}
 
+	/*========== ⑧行列計算 ==========*/
 	// 行列を定数バッファに転送
 	transform_.worldMatrixUpdate(worldTransform_);
 }
@@ -186,4 +203,109 @@ void Player::Update() {
 void Player::Draw() {
 	// 自機を描画
 	model_->Draw(worldTransform_, *camera_);
+}
+
+/// <summary>
+/// マップ衝突判定
+/// </summary>
+/// <param name="info">マップとの当たり判定情報</param>
+void Player::MapCollisionCheck(CollisionMapInfo& info) {
+	// 方向別のマップ衝突判定
+	MapCollisionCheckTop(info);
+	/*MapCollisionCheckBottom(info);
+	MapCollisionCheckRight(info);
+	MapCollisionCheckLeft(info);*/
+}
+
+/// <summary>
+/// 指定した角の座標計算
+/// </summary>
+/// <param name="center">指定したい角の矩形の座標</param>
+/// <param name="corner">指定した角</param>
+Vector3 Player::CornerPosition(const Vector3& center, Corner corner) {
+	Vector3 result = {};
+
+	Vector3 offsetTable[kNumCorner] = {
+	    {+kWidth / 2.0f, -kHeight / 2.0f, 0.0f}, // 右下
+	    {-kWidth / 2.0f, -kHeight / 2.0f, 0.0f}, // 左下
+	    {+kWidth / 2.0f, +kHeight / 2.0f, 0.0f}, // 右上
+	    {-kWidth / 2.0f, +kHeight / 2.0f, 0.0f}  // 左上
+	};
+
+	result.x = center.x + offsetTable[static_cast<uint32_t>(corner)].x;
+	result.y = center.y + offsetTable[static_cast<uint32_t>(corner)].y;
+	result.z = center.z + offsetTable[static_cast<uint32_t>(corner)].z;
+
+	return result;
+}
+
+// 方向別のマップ衝突判定
+// 上方向
+void Player::MapCollisionCheckTop(CollisionMapInfo& info) {
+	// 上昇しているか
+	if (info.MovementAmount.y <= 0) {
+		return;
+	}
+
+	// 移動後の4つの角の座標
+	std::array<Vector3, kNumCorner> positionsNew = {};
+
+	for (uint32_t i = 0; i < positionsNew.size(); ++i) {
+		positionsNew[i] = CornerPosition(
+		    {worldTransform_.translation_.x + info.MovementAmount.x, worldTransform_.translation_.y + info.MovementAmount.y, worldTransform_.translation_.z + info.MovementAmount.z},
+		    static_cast<Corner>(i));
+	}
+
+	MapChipType mapChipType;
+
+	// 真上の当たり判定を取る
+	bool hit = false;
+
+	// 左上点の判定
+	MapChipField::IndexSet indexSet = {};
+	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kLeftTop]);
+	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
+	if (mapChipType == MapChipType::kBlock) {
+		hit = true;
+	}
+
+	// 右上点の判定
+	// MapChipField::IndexSet indexSet = {};
+	indexSet = mapChipField_->GetMapChipIndexSetByPosition(positionsNew[kRightTop]);
+	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
+	if (mapChipType == MapChipType::kBlock) {
+		hit = true;
+	}
+
+	// ブロックに当たっているか
+	if (hit) {
+		// めり込みを解消する方向に移動量を設定
+		indexSet = mapChipField_->GetMapChipIndexSetByPosition(
+		    (Vector3)(worldTransform_.translation_.x + velocity_.x, worldTransform_.translation_.y + kHeight / 2.0f + velocity_.y, worldTransform_.translation_.z + velocity_.z));
+
+		// めり込み先ブロックの範囲矩形
+		MapChipField::Rect rect = mapChipField_->GetRectByIndex(indexSet.xIndex, indexSet.yIndex);
+		info.MovementAmount.y = std::max(0.0f, (rect.bottom - worldTransform_.translation_.y) - (kHeight + kBlank));
+		// 天井に当たった
+		info.isCeilingCollide = true;
+	}
+}
+// void Player::MapCollisionCheckBottom(CollisionMapInfo& info) {}
+// void Player::MapCollisionCheckRight(CollisionMapInfo& info) {}
+// void Player::MapCollisionCheckLeft(CollisionMapInfo& info) {}
+
+// 判定結果を反映させて移動させる
+void Player::MoveReflectingResult(const CollisionMapInfo& info) {
+	// 移動
+	worldTransform_.translation_.x += info.MovementAmount.x;
+	worldTransform_.translation_.y += info.MovementAmount.y;
+}
+
+// 天井に接触している時の処理
+void Player::ContactWithCeiling(const CollisionMapInfo& info) {
+	// 天井に当たったか
+	if (info.isCeilingCollide) {
+		DebugText::GetInstance()->ConsolePrintf("hit ceiking\n");
+		velocity_.y = 0.0f;
+	}
 }

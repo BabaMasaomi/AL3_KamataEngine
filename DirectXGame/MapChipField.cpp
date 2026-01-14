@@ -83,3 +83,28 @@ MapChipType MapChipField::GetMapChipTypeByIndex(uint32_t xIndex, uint32_t yIndex
 
 // マップチップ座標の取得
 Vector3 MapChipField::GetMapChipPositionByIndex(uint32_t xIndex, uint32_t yIndex) { return Vector3(kBlockWidth * xIndex, kBlockHeight * (kNumBlockVirchical - 1 - yIndex), 0); }
+
+// 指定座標のマップチップ番号を取得
+MapChipField::MapChipField::IndexSet MapChipField::GetMapChipIndexSetByPosition(const KamataEngine::Vector3& pos) {
+	IndexSet indexSet = {};
+
+	indexSet.xIndex = (uint32_t)((pos.x + kBlockWidth / 2) / kBlockWidth);
+	indexSet.yIndex = (uint32_t)(kNumBlockVirchical - ((pos.y + kBlockHeight / 2) / kBlockHeight));
+
+	return indexSet;
+}
+
+// 指定マップチップ番号のブロックの範囲を取得
+MapChipField::Rect MapChipField::GetRectByIndex(uint32_t xIndex, uint32_t yIndex) {
+	// 指定ブロックの中心座標を所得する
+	Vector3 center = GetMapChipPositionByIndex(xIndex, yIndex);
+
+	Rect rect = {};
+
+	rect.left = center.x - kBlockWidth / 2.0f;
+	rect.right = center.x + kBlockWidth / 2.0f;
+	rect.bottom = center.y - kBlockHeight / 2.0f;
+	rect.top = center.y + kBlockHeight / 2.0f;
+
+	return rect;
+}

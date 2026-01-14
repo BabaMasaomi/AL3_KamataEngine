@@ -13,7 +13,25 @@ struct MapChipData {
 };
 
 class MapChipField {
+private:
+	// 構造体型変数
+	MapChipData mapChipData_;
+
 public:
+	// インデックスをセット
+	struct IndexSet {
+		uint32_t xIndex;
+		uint32_t yIndex;
+	};
+
+	// 範囲矩形
+	struct Rect {
+		float left;   // 左
+		float right;  // 右
+		float top;    // 上
+		float bottom; // 下
+	};
+
 	// コンストラクタ&デストラクタ
 	MapChipField();
 	~MapChipField();
@@ -39,7 +57,14 @@ public:
 	// マップチップ座標の取得
 	KamataEngine::Vector3 GetMapChipPositionByIndex(uint32_t xIndex, uint32_t yIndex);
 
-private:
-	// 構造体型変数
-	MapChipData mapChipData_;
+	// 指定座標のマップチップ番号を取得
+	IndexSet GetMapChipIndexSetByPosition(const KamataEngine::Vector3& pos);
+
+	/// <summary>
+	/// 指定マップチップ番号のブロックの範囲を取得
+	/// </summary>
+	/// <param name="xIndex">マップチップ番号X</param>
+	/// <param name="yIndex">マップチップ番号Y</param>
+	/// <returns></returns>
+	Rect GetRectByIndex(uint32_t xIndex, uint32_t yIndex);
 };
