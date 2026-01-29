@@ -35,10 +35,13 @@ private:
 	static inline const float kAcceleration = 0.025f;
 
 	// 移動減衰の基本の値
-	static inline const float kAttenuation = 0.09f;
+	static inline const float kAttenuation = 0.1f;
+
+	// 着地時の減衰の基本の値
+	static inline const float kAttenuationLanding = 0.1f;
 
 	// 制限速度
-	static inline const float kLimitRunSpeed = 1.5f;
+	static inline const float kLimitRunSpeed = 0.75f;
 
 	// 左右の向き
 	LRDirection lrDirection_ = LRDirection::kRight;
@@ -50,21 +53,24 @@ private:
 	static inline const float kGravityAcceleration = 0.09f;
 
 	// 最大落下速度
-	static inline const float kLimitFallSpeed_ = 1.0f;
+	static inline const float kLimitFallSpeed_ = 0.75f;
 
 	// ジャンプ初速
 	static inline const float kJumpAcceleration_ = 1.0f;
 
+	// 壁にぶつかった時の減速率
+	static inline const float kAttenuationWall = 0.75f;
+
 	// キャラクターの当たり判定サイズ
-	static inline const float kWidth = 0.8f;
-	static inline const float kHeight = 0.8f;
+	static inline const float kWidth = 1.6f;
+	static inline const float kHeight = 1.6f;
 
 	// マップとの当たり判定情報
 	struct CollisionMapInfo {
-		bool isCeilingCollide = false;               // 天井衝突フラグ
-		bool isLanding = false;                      // 着地フラグ
-		bool isWallCollide = false;                  // 壁衝突フラグ
-		KamataEngine::Vector3 MovementAmount = {}; // 移動量
+		bool isCeilingCollide = false;              // 天井衝突フラグ
+		bool isLanding = false;                     // 着地フラグ
+		bool isWallCollide = false;                 // 壁衝突フラグ
+		KamataEngine::Vector3 MovementAmount = {};	// 移動量
 	};
 
 	// 角
@@ -78,7 +84,7 @@ private:
 	};
 
 	// ブロックとの間にとる余白
-	static inline const float kBlank = 0.2f;
+	static inline const float kMargin = 0.05f;
 
 	// 旋回開始の角度
 	float turnFirstRotationY_ = 0.0f;
@@ -126,9 +132,9 @@ public:
 
 	// 方向別のマップ衝突判定
 	void MapCollisionCheckTop(CollisionMapInfo& info);
-	/*void MapCollisionCheckBottom(CollisionMapInfo& info);
+	void MapCollisionCheckBottom(CollisionMapInfo& info);
 	void MapCollisionCheckRight(CollisionMapInfo& info);
-	void MapCollisionCheckLeft(CollisionMapInfo& info);*/
+	void MapCollisionCheckLeft(CollisionMapInfo& info);
 
 	/// <summary>
 	/// 判定結果を反映させて移動させる
@@ -141,6 +147,19 @@ public:
 	/// </summary>
 	/// <param name="info">マップとの当たり判定情報</param>
 	void ContactWithCeiling(const CollisionMapInfo& info);
+
+	/// <summary>
+	/// 壁に接触している時の処理
+	/// </summary>
+	/// <param name="info">マップとの当たり判定情報</param>
+	void ContactWithWall(const CollisionMapInfo& info);
+
+	/// <summary>
+	/// 接地状態の切り替え
+	/// </summary>
+	/// <param name="info">マップとの当たり判定情報</param>
+	void SwitchGroundingState(const CollisionMapInfo& info);
+
 
 	// Gettterを用意する(追従カメラのために必要)
 	// 平行移動した位置

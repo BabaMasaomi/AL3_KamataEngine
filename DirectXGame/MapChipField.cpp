@@ -89,7 +89,7 @@ MapChipField::MapChipField::IndexSet MapChipField::GetMapChipIndexSetByPosition(
 	IndexSet indexSet = {};
 
 	indexSet.xIndex = (uint32_t)((pos.x + kBlockWidth / 2) / kBlockWidth);
-	indexSet.yIndex = (uint32_t)(kNumBlockVirchical - ((pos.y + kBlockHeight / 2) / kBlockHeight));
+	indexSet.yIndex = (uint32_t)(kNumBlockVirchical /*- 1*/ - ((pos.y + kBlockHeight / 2) / kBlockHeight));
 
 	return indexSet;
 }
