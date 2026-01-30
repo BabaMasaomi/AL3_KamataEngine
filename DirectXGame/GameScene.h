@@ -3,6 +3,7 @@
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Player.h"
+#include "Enemy.h"
 #include "Skydome.h"
 #include "Transform.h"
 #include <vector>
@@ -46,6 +47,16 @@ private:
 
 	// プレイヤー
 	Player* player_ = nullptr;
+
+	/*-------------------- 雑魚敵 --------------------*/
+	// 敵の3Dモデル
+	KamataEngine::Model* modelEnemy_ = nullptr;
+
+	// 敵のワールドトランスフォーム
+	KamataEngine::WorldTransform worldTrasformEnemy_;
+
+	// 敵
+	Enemy* enemy_ = nullptr;
 
 	/*-------------------- 天球 --------------------*/
 	// 天球の3Dモデル

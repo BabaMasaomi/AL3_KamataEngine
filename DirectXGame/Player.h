@@ -105,7 +105,7 @@ public:
 	/// </summary>
 	/// <param name="model">3Dモデル</param>
 	/// <param name="camera">カメラ</param>
-	void Intialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3 pos);
+	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3 pos);
 
 	/// <summary>
 	/// 自機の更新

@@ -14,7 +14,7 @@ using namespace KamataEngine;
 /// <param name="model">3Dモデル</param>
 /// <param name="textureHandle">テクスチャハンドル</param>
 /// <param name="camera">カメラ</param>
-void Skydome::Intialize(Model* model, Camera* camera) {
+void Skydome::Initialize(Model* model, Camera* camera) {
 	// ぬるぽチェック
 	assert(model);
 

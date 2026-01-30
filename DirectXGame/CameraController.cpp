@@ -6,7 +6,7 @@
 // KamataEngine::を毎回入力しなくてもいい様にする
 using namespace KamataEngine;
 
-void CameraController::Intialize(Camera* camera) {
+void CameraController::Initialize(Camera* camera) {
 	// 引き数の内容をメンバ変数に記録
 	camera_ = camera;
 }

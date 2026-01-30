@@ -17,7 +17,7 @@ using namespace KamataEngine;
 /// </summary>
 /// <param name="model">3Dモデル</param>
 /// <param name="camera">カメラ</param>
-void Player::Intialize(Model* model, Camera* camera, const Vector3 pos) {
+void Player::Initialize(Model* model, Camera* camera, const Vector3 pos) {
 	// ぬるぽチェック
 	assert(model);
 

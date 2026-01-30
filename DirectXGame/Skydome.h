@@ -12,7 +12,7 @@ public:
 	/// </summary>
 	/// <param name="model">3Dモデル</param>
 	/// <param name="camera">カメラ</param>
-	void Intialize(KamataEngine::Model* model, KamataEngine::Camera* camera);
+	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera);
 
 	/// <summary>
 	/// 天球の更新

@@ -17,7 +17,7 @@ public:
 	/// <summary>
 	/// カメラの初期化
 	/// </summary>
-	void Intialize(KamataEngine::Camera* camera);
+	void Initialize(KamataEngine::Camera* camera);
 
 	/// <summary>
 	/// カメラの更新

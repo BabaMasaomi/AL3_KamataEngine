@@ -8,6 +8,7 @@ using namespace KamataEngine;
 GameScene::GameScene() {}
 GameScene::~GameScene() {
 	delete player_;       // プレイヤーの解放
+	delete enemy_;        // 敵の解放
 	delete modelSkydome_; // 天球の3Dモデルの解放
 	delete modelBlocks_;  // ブロックの3Dモデルの解放
 
@@ -55,13 +56,32 @@ void GameScene::Initialize() {
 	player_ = new Player();
 
 	// 座標をマップチップ番号で指定
-	Vector3 playerPos = mapChipField_->GetMapChipPositionByIndex(1, 18);
+	Vector3 playerPos = mapChipField_->GetMapChipPositionByIndex(13, 18);
 
 	// プレイヤーの初期化
-	player_->Intialize(model_, &camera_, playerPos);
+	player_->Initialize(model_, &camera_, playerPos);
 
 	// マップチップデータのセット
 	player_->SetMapChipField(mapChipField_);
+
+	// 敵の生成、初期化
+	// 敵の3Dモデルの生成
+	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
+
+	// 敵のワールドトランスフォームの初期化
+	worldTrasformEnemy_.Initialize();
+
+	// 敵の生成
+	enemy_ = new Enemy();
+
+	// 座標をマップチップ番号で指定
+	Vector3 enemyPos = mapChipField_->GetMapChipPositionByIndex(40, 18);
+
+	// 敵の初期化
+	enemy_->Initialize(modelEnemy_, &camera_, enemyPos);
+
+	// マップチップデータのセット
+	// enemy_->SetMapChipField(mapChipField_);		// マップチップと当たり判定を取る時に必要
 
 	// 天球の生成、初期化
 	// 天球の3Dモデルの生成
@@ -74,7 +94,7 @@ void GameScene::Initialize() {
 	skydome_ = new Skydome();
 
 	// 天球の初期化
-	skydome_->Intialize(modelSkydome_, &camera_);
+	skydome_->Initialize(modelSkydome_, &camera_);
 
 	// ブロックの生成、初期化
 	// ブロックの3Dモデルの生成
@@ -85,7 +105,7 @@ void GameScene::Initialize() {
 	camaraController_ = new CameraController();
 
 	// カメラコントローラの初期化
-	camaraController_->Intialize(&camera_);
+	camaraController_->Initialize(&camera_);
 
 	// 追従対象をセット
 	camaraController_->SetTarget(player_);
@@ -106,6 +126,9 @@ void GameScene::Update() {
 	// プレイヤーの更新
 	player_->Update();
 
+	// 敵の更新
+	enemy_->Update();
+
 	// 天球の更新
 	skydome_->Update();
 
@@ -118,7 +141,7 @@ void GameScene::Update() {
 			// アフィン変換行列の作成
 			worldTransformBlock->scale_ = {2.0f, 2.0f, 2.0f};
 			worldTransformBlock->rotation_ = {0.0f, 0.0f, 0.0f};
-			// worldTransformBlock->translation_ = {0, 0, 0};	// Intializeで設定したので変更しない
+			// worldTransformBlock->translation_ = {0, 0, 0};	// Initializeで設定したので変更しない
 
 			// 行列を定数バッファに転送
 			transform_.worldMatrixUpdate(*worldTransformBlock);
@@ -176,6 +199,9 @@ void GameScene::Draw() {
 			modelBlocks_->Draw(*worldTransformBlock, camera_);
 		}
 	}
+
+	// 敵の描画
+	enemy_->Draw();
 
 	// プレイヤーの描画
 	player_->Draw();
