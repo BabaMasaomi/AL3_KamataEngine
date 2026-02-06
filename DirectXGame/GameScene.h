@@ -6,6 +6,7 @@
 #include "Enemy.h"
 #include "Skydome.h"
 #include "Transform.h"
+#include "temporaryAABB.h"
 #include <vector>
 
 class GameScene {
@@ -26,6 +27,12 @@ public:
 
 	// 表示ブロックの生成
 	void GenerateBlocks();
+
+	// 総当たり当たり判定
+	void CheckAllCollisions();
+
+	// AABB同士の当たり判定
+	bool CheckAABBCollision(const AABB& aabb1, const AABB& aabb2);
 
 private:
 	// privateにしておく必要があるやつ
@@ -56,7 +63,7 @@ private:
 	KamataEngine::WorldTransform worldTrasformEnemy_;
 
 	// 敵
-	Enemy* enemy_ = nullptr;
+	std::list<Enemy*> enemies_ = {};
 
 	/*-------------------- 天球 --------------------*/
 	// 天球の3Dモデル

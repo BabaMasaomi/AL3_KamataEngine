@@ -1,9 +1,12 @@
 ﻿#pragma once
 #include "KamataEngine.h"
 #include "Transform.h"
+#include"temporaryAABB.h"
 
 // 前方宣言
 class MapChipField;
+
+class Enemy;
 
 // 左右の向き
 enum class LRDirection {
@@ -160,6 +163,23 @@ public:
 	/// <param name="info">マップとの当たり判定情報</param>
 	void SwitchGroundingState(const CollisionMapInfo& info);
 
+	/// <summary>
+	/// 自機のworld座標を取得
+	/// </summary>
+	/// <returns></returns>
+	KamataEngine::Vector3 GetWorldPos();
+
+	/// <summary>
+	/// AABBを取得
+	/// </summary>
+	/// <returns></returns>
+	AABB GetAABB();
+
+	/// <summary>
+	/// 自機の衝突判定処理
+	/// </summary>
+	/// <param name="enemy">敵の情報</param>
+	void OncollisionEnemy(Enemy* enemy);
 
 	// Gettterを用意する(追従カメラのために必要)
 	// 平行移動した位置

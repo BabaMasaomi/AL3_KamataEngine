@@ -72,3 +72,29 @@ void Enemy::Draw() {
 	// 敵を描画
 	modelEnemy_->Draw(worldTransform_, *camera_);
 }
+
+Vector3 Enemy::GetWorldPos() {
+	Vector3 worldPos;
+
+	// ワールド行列の平行移動成分を取得(正しいやり方がワカンナイヨー)
+	worldPos.x = worldTransform_.translation_.x;
+	worldPos.y = worldTransform_.translation_.y;
+	worldPos.z = worldTransform_.translation_.z;
+
+	return worldPos;
+}
+
+AABB Enemy::GetAABB() {
+	Vector3 worldPos = GetWorldPos();
+
+	AABB aabb;
+
+	aabb.min = {worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f};
+	aabb.max = {worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f};
+
+	return aabb;
+}
+
+void Enemy::OnCollisionPlayer(Player* player) { 
+	(void)player;
+}

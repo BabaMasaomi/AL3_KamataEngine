@@ -44,9 +44,6 @@ void Player::Update() {
 	/*========== ①移動入力 ==========*/
 	// 接地している時
 	if (onGround_) {
-		// 接地中は落下速度をリセット
-		velocity_.y = 0.0f;
-
 		// 移動入力
 		if (Input::GetInstance()->PushKey(DIK_RIGHT) || Input::GetInstance()->PushKey(DIK_LEFT)) {
 			// 加速
@@ -94,7 +91,6 @@ void Player::Update() {
 
 			// 加速/減速
 			velocity_.x += acceleration.x;
-			velocity_.y = 0.0f;
 
 			// 最大速度制限
 			velocity_.x = std::clamp(velocity_.x, -kLimitRunSpeed, kLimitRunSpeed);
@@ -138,39 +134,6 @@ void Player::Update() {
 
 	/*========== ⑥接地状態の切り替え ==========*/
 	SwitchGroundingState(collisionMapInfo);
-
-	//// 着地フラグ
-	// bool landing = false;
-
-	//// 地面との当たり判定
-	//// 降下中か
-	// if (velocity_.y < 0) {
-	//	// Y座標が地面以下になったら着地
-	//	if (worldTransform_.translation_.y <= 2.0f) {
-	//		landing = true;
-	//	}
-	// }
-
-	//// 接地判定
-	// if (onGround_) {
-	//	if (velocity_.y > 0.0f) {
-	//		// 空中状態に移行
-	//		onGround_ = false;
-	//	}
-
-	//} else {
-	//	// 着地
-	//	if (landing) {
-	//		// めり込み対策
-	//		worldTransform_.translation_.y = 2.0f;
-	//		// 摩擦で横方向の速度が減衰
-	//		velocity_.x *= (1.0f - kAttenuation);
-	//		// 下方向速度をリセット
-	//		velocity_.y = 0.0f;
-	//		// 接地状態に移行
-	//		onGround_ = true;
-	//	}
-	//}
 
 	/*========== ⑦旋回制御 ==========*/
 	if (turnTimer_ > 0.0f) {
@@ -575,4 +538,33 @@ void Player::SwitchGroundingState(const CollisionMapInfo& info) {
 			velocity_.y = 0.0f;
 		}
 	}
+}
+
+Vector3 Player::GetWorldPos() { 
+	Vector3 worldPos;
+
+	// ワールド行列の平行移動成分を取得(正しいやり方がワカンナイヨー)
+	worldPos.x = worldTransform_.translation_.x;
+	worldPos.y = worldTransform_.translation_.y;
+	worldPos.z = worldTransform_.translation_.z;
+
+	return worldPos;
+}
+
+AABB Player::GetAABB() { 
+	Vector3 worldPos = GetWorldPos();
+
+	AABB aabb;
+
+	aabb.min = {worldPos.x - kWidth / 2.0f, worldPos.y - kHeight / 2.0f, worldPos.z - kWidth / 2.0f};
+	aabb.max = {worldPos.x + kWidth / 2.0f, worldPos.y + kHeight / 2.0f, worldPos.z + kWidth / 2.0f};
+
+	return aabb;
+}
+
+void Player::OncollisionEnemy(Enemy* enemy) { 
+	(void)enemy;
+	
+	// 飛び上がる(当たり判定が機能していることを確認したので無効化中)
+	//velocity_.y += kJumpAcceleration_;
 }

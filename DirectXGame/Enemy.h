@@ -1,12 +1,15 @@
 ﻿#pragma once
 #include "KamataEngine.h"
 #include "Transform.h"
+#include "temporaryAABB.h"
 
 // 前方宣言
 class MapChipField;
 
+class Player;
+
 // 左右の向き
-//enum class LRDirection {
+// enum class LRDirection {
 //	kRight,
 //	kLeft,
 //};
@@ -34,6 +37,9 @@ private:
 	// 基礎移動速度
 	static inline const float kMoveSpeed = 0.05f;
 
+	// 敵の当たり判定サイズ
+	static inline const float kWidth = 1.6f;
+	static inline const float kHeight = 1.6f;
 
 	// アニメーション用変数
 	// 最初の角度(度)
@@ -70,4 +76,21 @@ public:
 	/// </summary>
 	void Draw();
 
+	/// <summary>
+	/// 自機のworld座標を取得
+	/// </summary>
+	/// <returns></returns>
+	KamataEngine::Vector3 GetWorldPos();
+
+	/// <summary>
+	/// AABBを取得
+	/// </summary>
+	/// <returns></returns>
+	 AABB GetAABB();
+
+	/// <summary>
+	/// 敵の衝突判定処理
+	/// </summary>
+	/// <param name="player">自機の情報</param>
+	void OnCollisionPlayer(Player* player);
 };
