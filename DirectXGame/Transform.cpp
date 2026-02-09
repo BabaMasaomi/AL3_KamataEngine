@@ -125,3 +125,21 @@ Matrix4x4 Transform::MakeAffineMatrix(const Vector3& scale, const Vector3& rotat
 	// アフィン変換行列を合成
 	return result = Multiply(Multiply(scaleMatrix, rotateMatrix), translateMatrix);
 }
+
+ 
+Vector3 Transform::TransformNormal(const Vector3& normal, const Matrix4x4& matWorld) {
+	Vector3 result{};
+	result.x = normal.x * matWorld.m[0][0] + normal.y * matWorld.m[1][0] + normal.z * matWorld.m[2][0];
+	result.y = normal.x * matWorld.m[0][1] + normal.y * matWorld.m[1][1] + normal.z * matWorld.m[2][1];
+	result.z = normal.x * matWorld.m[0][2] + normal.y * matWorld.m[1][2] + normal.z * matWorld.m[2][2];
+
+	float w = normal.x * matWorld.m[0][3] + normal.y * matWorld.m[1][3] + normal.z * matWorld.m[2][3] + matWorld.m[3][3];
+
+	if (w != 1.0f) {
+		result.x /= w;
+		result.y /= w;
+		result.z /= w;
+	}
+
+	return result;
+}

@@ -5,6 +5,7 @@
 #include "Player.h"
 #include "Enemy.h"
 #include "Skydome.h"
+#include "DeathParticles.h"
 #include "Transform.h"
 #include "temporaryAABB.h"
 #include <vector>
@@ -81,6 +82,13 @@ private:
 
 	// ブロック用可変個配列
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
+
+	/*-------------------- パーティクル --------------------*/
+	// パーティクルの3Dモデル
+	KamataEngine::Model* modelParticles_ = nullptr;
+
+	// 死亡パーティクル
+	DeathParticles* deathParticles_ = nullptr;
 
 	/*-------------------- 追従カメラ --------------------*/
 	// カメラ

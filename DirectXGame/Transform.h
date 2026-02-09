@@ -30,4 +30,7 @@ public:
 
 	// アフィン変換を合成する関数
 	KamataEngine::Matrix4x4 MakeAffineMatrix(const KamataEngine::Vector3& scale, const KamataEngine::Vector3& rotate, const KamataEngine::Vector3& translate);
+
+	// Vector3を行列で変換する関数(位置ベクトル用)
+	KamataEngine::Vector3 TransformNormal(const KamataEngine::Vector3& normal, const KamataEngine::Matrix4x4& matWorld);
 };

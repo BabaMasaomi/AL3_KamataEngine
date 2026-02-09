@@ -24,6 +24,10 @@ GameScene::~GameScene() {
 	}
 	worldTransformBlocks_.clear();
 
+	for (DeathParticles* deathParticles : {deathParticles_}) {
+		delete deathParticles; // パーティクルの解放
+	}
+
 	delete mapChipField_;     // マップチップフィールドの解放
 	delete camaraController_; // カメラコントローラの解放
 	delete debugCamera_;      // デバッグカメラの解放
@@ -49,6 +53,7 @@ void GameScene::Initialize() {
 	// 表示ブロックの生成
 	GenerateBlocks();
 
+	/*--------------- プレイヤー ---------------*/
 	// プレイヤーの生成、初期化
 	// プレイヤーの3Dモデルの生成
 	model_ = Model::CreateFromOBJ("player", true);
@@ -68,6 +73,7 @@ void GameScene::Initialize() {
 	// マップチップデータのセット
 	player_->SetMapChipField(mapChipField_);
 
+	/*--------------- 敵 ---------------*/
 	// 敵の生成、初期化
 	// 敵の3Dモデルの生成
 	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
@@ -91,6 +97,7 @@ void GameScene::Initialize() {
 	// マップチップデータのセット
 	// enemies_->SetMapChipField(mapChipField_);		// マップチップと当たり判定を取る時に必要
 
+	/*--------------- 天球 ---------------*/
 	// 天球の生成、初期化
 	// 天球の3Dモデルの生成
 	modelSkydome_ = Model::CreateFromOBJ("skydome", true);
@@ -104,10 +111,24 @@ void GameScene::Initialize() {
 	// 天球の初期化
 	skydome_->Initialize(modelSkydome_, &camera_);
 
+	/*--------------- ブロック ---------------*/
 	// ブロックの生成、初期化
 	// ブロックの3Dモデルの生成
 	modelBlocks_ = Model::CreateFromOBJ("block", true);
 
+	/*--------------- パーティクル ---------------*/
+	// パーティクルの生成、初期化
+	// パーティクルの3Dモデルの生成
+	modelParticles_ = Model::CreateFromOBJ("deathParticle", true);
+
+	// パーティクルのワールドトランスフォームの初期化
+	worldTrasform_.Initialize();
+
+	// パーティクル生成 (仮)
+	deathParticles_ = new DeathParticles();
+	deathParticles_->Initialize(modelParticles_, &camera_, playerPos);
+
+	/*--------------- カメラ ---------------*/
 	// カメラコントローラの生成、初期化
 	// カメラコントローラの生成
 	camaraController_ = new CameraController();
@@ -156,6 +177,11 @@ void GameScene::Update() {
 			// 行列を定数バッファに転送
 			transform_.worldMatrixUpdate(*worldTransformBlock);
 		}
+	}
+
+	// パーティクルの更新
+	if (deathParticles_ != nullptr) {
+		deathParticles_->Update();
 	}
 
 	// カメラコントローラの更新
@@ -218,6 +244,11 @@ void GameScene::Draw() {
 		enemy->Draw();
 	}
 
+	// パーティクルの描画
+	if (deathParticles_ != nullptr) {
+		deathParticles_->Draw();
+	}
+
 	// プレイヤーの描画
 	player_->Draw();
 
@@ -265,7 +296,7 @@ void GameScene::CheckAllCollisions() {
 		aabb2 = enemy->GetAABB();
 
 		// 当たり判定
-		if (CheckAABBCollision(aabb1,aabb2)) {
+		if (CheckAABBCollision(aabb1, aabb2)) {
 			// 衝突応答
 			// 自キャラの衝突判定時の処理
 			player_->OncollisionEnemy(enemy);
@@ -276,12 +307,11 @@ void GameScene::CheckAllCollisions() {
 	}
 
 #pragma endregion
-
 }
 
 /*-------------------- AABB同士の当たり判定 --------------------*/
-bool GameScene::CheckAABBCollision(const AABB& aabb1, const AABB& aabb2) { 
-	bool isCollide = true; 
+bool GameScene::CheckAABBCollision(const AABB& aabb1, const AABB& aabb2) {
+	bool isCollide = true;
 
 	// X軸方向の判定
 	if (aabb1.max.x < aabb2.min.x || aabb2.max.x < aabb1.min.x) {
@@ -299,5 +329,4 @@ bool GameScene::CheckAABBCollision(const AABB& aabb1, const AABB& aabb2) {
 	}
 
 	return isCollide;
-
 }
