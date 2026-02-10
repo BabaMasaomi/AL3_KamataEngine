@@ -1,4 +1,4 @@
-﻿#include "GameScene.h"
+﻿#include "TitleScene.h"
 #include "KamataEngine.h"
 #include <Windows.h>
 
@@ -17,13 +17,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// ImGuiのインスタンスを取得
 	ImGuiManager* imGuiManager = ImGuiManager::GetInstance();
 
-	/*-------------------- インスタンス生成 --------------------*/
-	// ゲームシーン
-	GameScene* gameScene = new GameScene;
-
-	/*-------------------- 初期化処理 --------------------*/
-	// ゲームシーン
-	gameScene->Initialize();
+	/*-------------------- インスタンス生成、初期化 --------------------*/
+	// タイトルシーン
+	TitleScene* titleScene = new TitleScene;
+	titleScene->Initialize();
 
 	// メインループ
 	while (true) {
@@ -37,7 +34,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		imGuiManager->Begin();
 
 		// ゲームシーン
-		gameScene->Update();
+		titleScene->Update();
 
 		// ImGui受付終了
 		imGuiManager->End();
@@ -48,7 +45,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		// 描画処理を記述
 		// ゲームシーン
-		gameScene->Draw();
+		titleScene->Draw();
 
 		// ImGui描画
 		imGuiManager->Draw();
@@ -58,10 +55,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	}
 
 	// 解放処理
-	delete gameScene;
+	delete titleScene;
 
 	// nullputrの代入(解放処理とセットで)
-	gameScene = nullptr;
+	titleScene = nullptr;
 
 	// エンジンの終了
 	Finalize();
