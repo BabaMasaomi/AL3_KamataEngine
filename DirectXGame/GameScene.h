@@ -25,6 +25,9 @@ private:
 	// ゲームのフェーズ(変数)
 	Phase phase_;
 
+	// 終了フラグ
+	bool finished_ = false;
+
 	// マップチップフィールド
 	MapChipField* mapChipField_ = nullptr;
 
@@ -118,4 +121,7 @@ public:
 
 	// フェーズの切り替え
 	void ChangePhase();
+
+	/*-------------------- アクセッサ --------------------*/
+	bool GetIsFinished() const { return finished_; }
 };
