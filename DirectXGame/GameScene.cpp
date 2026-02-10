@@ -39,6 +39,9 @@ GameScene::~GameScene() {
 /*-------------------- 初期化 --------------------*/
 void GameScene::Initialize() {
 	// メンバ変数への代入処理
+	// フェーズをプレイから開始
+	phase_ = Phase::kPlay;
+
 	// カメラの初期化
 	camera_.farZ = 550.0f;
 	camera_.Initialize();

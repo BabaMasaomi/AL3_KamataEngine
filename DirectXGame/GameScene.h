@@ -40,6 +40,15 @@ private:
 	//// カメラ
 	// KamataEngine::Camera camera_;
 
+	// ゲームのフェーズ(型)
+	enum class Phase {
+		kPlay,	// プレイ中
+		kDeath,	// 死亡
+	};
+
+	// ゲームのフェーズ(変数)
+	Phase phase_;
+
 	// マップチップフィールド
 	MapChipField* mapChipField_ = nullptr;
 
