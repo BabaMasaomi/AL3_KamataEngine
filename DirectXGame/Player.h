@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "KamataEngine.h"
 #include "Transform.h"
-#include"temporaryAABB.h"
+#include "temporaryAABB.h"
 
 // 前方宣言
 class MapChipField;
@@ -64,16 +64,19 @@ private:
 	// 壁にぶつかった時の減速率
 	static inline const float kAttenuationWall = 0.75f;
 
+	// 死亡フラグ
+	bool isDead_ = false;
+
 	// キャラクターの当たり判定サイズ
 	static inline const float kWidth = 1.6f;
 	static inline const float kHeight = 1.6f;
 
 	// マップとの当たり判定情報
 	struct CollisionMapInfo {
-		bool isCeilingCollide = false;              // 天井衝突フラグ
-		bool isLanding = false;                     // 着地フラグ
-		bool isWallCollide = false;                 // 壁衝突フラグ
-		KamataEngine::Vector3 MovementAmount = {};	// 移動量
+		bool isCeilingCollide = false;             // 天井衝突フラグ
+		bool isLanding = false;                    // 着地フラグ
+		bool isWallCollide = false;                // 壁衝突フラグ
+		KamataEngine::Vector3 MovementAmount = {}; // 移動量
 	};
 
 	// 角
@@ -188,7 +191,14 @@ public:
 	// 速度
 	const KamataEngine::Vector3& GetVeloctiy() const { return velocity_; }
 
+	// アクセッサ
+	// ゲッター
+	bool GetIsDead() { return isDead_; }
+
 	// セッター
+	// 自機のワールド座標
+	void SetWorldPos(const KamataEngine::Vector3& pos) { worldTransform_.translation_ = pos; }
+
 	// マップチップ情報
 	void SetMapChipField(MapChipField* mapChipField) { mapChipField_ = mapChipField; }
 };

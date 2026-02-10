@@ -11,30 +11,6 @@
 #include <vector>
 
 class GameScene {
-public:
-	/*-------------------- コンストラクタ&デストラクタ --------------------*/
-	GameScene();
-	~GameScene();
-
-	/*-------------------- メンバ関数 --------------------*/
-	// 初期化
-	void Initialize();
-
-	// 更新
-	void Update();
-
-	// 描画
-	void Draw();
-
-	// 表示ブロックの生成
-	void GenerateBlocks();
-
-	// 総当たり当たり判定
-	void CheckAllCollisions();
-
-	// AABB同士の当たり判定
-	bool CheckAABBCollision(const AABB& aabb1, const AABB& aabb2);
-
 private:
 	// privateにしておく必要があるやつ
 	//// カメラ
@@ -42,8 +18,8 @@ private:
 
 	// ゲームのフェーズ(型)
 	enum class Phase {
-		kPlay,	// プレイ中
-		kDeath,	// 死亡
+		kPlay,  // プレイ中
+		kDeath, // 死亡
 	};
 
 	// ゲームのフェーズ(変数)
@@ -115,4 +91,31 @@ private:
 
 	// デバッグカメラ
 	KamataEngine::DebugCamera* debugCamera_ = nullptr;
+
+public:
+	/*-------------------- コンストラクタ&デストラクタ --------------------*/
+	GameScene();
+	~GameScene();
+
+	/*-------------------- メンバ関数 --------------------*/
+	// 初期化
+	void Initialize();
+
+	// 更新
+	void Update();
+
+	// 描画
+	void Draw();
+
+	// 表示ブロックの生成
+	void GenerateBlocks();
+
+	// 総当たり当たり判定
+	void CheckAllCollisions();
+
+	// AABB同士の当たり判定
+	bool CheckAABBCollision(const AABB& aabb1, const AABB& aabb2);
+
+	// フェーズの切り替え
+	void ChangePhase();
 };

@@ -540,10 +540,11 @@ void Player::SwitchGroundingState(const CollisionMapInfo& info) {
 	}
 }
 
-Vector3 Player::GetWorldPos() { 
+// ワールド座標取得
+Vector3 Player::GetWorldPos() {
 	Vector3 worldPos;
 
-	// ワールド行列の平行移動成分を取得(正しいやり方がワカンナイヨー)
+	// ワールド行列の平行移動成分を取得
 	worldPos.x = worldTransform_.translation_.x;
 	worldPos.y = worldTransform_.translation_.y;
 	worldPos.z = worldTransform_.translation_.z;
@@ -551,7 +552,7 @@ Vector3 Player::GetWorldPos() {
 	return worldPos;
 }
 
-AABB Player::GetAABB() { 
+AABB Player::GetAABB() {
 	Vector3 worldPos = GetWorldPos();
 
 	AABB aabb;
@@ -562,9 +563,9 @@ AABB Player::GetAABB() {
 	return aabb;
 }
 
-void Player::OncollisionEnemy(Enemy* enemy) { 
+void Player::OncollisionEnemy(Enemy* enemy) {
+	// 敵と接触したら死亡
+	isDead_ = true;
+
 	(void)enemy;
-	
-	// 飛び上がる(当たり判定が機能していることを確認したので無効化中)
-	//velocity_.y += kJumpAcceleration_;
 }

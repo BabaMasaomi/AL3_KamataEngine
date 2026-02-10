@@ -127,10 +127,6 @@ void GameScene::Initialize() {
 	// パーティクルのワールドトランスフォームの初期化
 	worldTrasform_.Initialize();
 
-	// パーティクル生成 (仮)
-	deathParticles_ = new DeathParticles();
-	deathParticles_->Initialize(modelParticles_, &camera_, playerPos);
-
 	/*--------------- カメラ ---------------*/
 	// カメラコントローラの生成、初期化
 	// カメラコントローラの生成
@@ -154,44 +150,117 @@ void GameScene::Initialize() {
 
 /*-------------------- 更新 --------------------*/
 void GameScene::Update() {
-	// インゲームの更新処理
-	// プレイヤーの更新
-	player_->Update();
+	// フェーズの切り替え処理
+	ChangePhase();
 
-	// 敵の更新
-	for (Enemy* enemy : enemies_) {
-		enemy->Update();
-	}
+	// フェーズごとの更新処理
+	switch (phase_) {
+	case GameScene::Phase::kPlay:
+		// インゲームの更新処理
+		// 天球の更新
+		skydome_->Update();
 
-	// 天球の更新
-	skydome_->Update();
+		// プレイヤーの更新
+		player_->Update();
 
-	// ブロックの更新
-	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
-		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
-			if (!worldTransformBlock) // 空白ならスキップ
-				continue;
-
-			// アフィン変換行列の作成
-			worldTransformBlock->scale_ = {2.0f, 2.0f, 2.0f};
-			worldTransformBlock->rotation_ = {0.0f, 0.0f, 0.0f};
-			// worldTransformBlock->translation_ = {0, 0, 0};	// Initializeで設定したので変更しない
-
-			// 行列を定数バッファに転送
-			transform_.worldMatrixUpdate(*worldTransformBlock);
+		// 敵の更新
+		for (Enemy* enemy : enemies_) {
+			enemy->Update();
 		}
+
+		// カメラコントローラの更新
+		camaraController_->Update();
+
+		// カメラの処理
+		if (isDebugCameraActive_) {
+			// デバッグカメラの更新
+			debugCamera_->Update();
+
+			// カメラ位置に行列を適用
+			camera_.matView = debugCamera_->GetCamera().matView;
+			camera_.matProjection = debugCamera_->GetCamera().matProjection;
+
+			// ビュープロジェクション行列の更新と転送
+			camera_.TransferMatrix();
+
+		} else {
+			// ビュープロジェクション行列の更新と転送
+			camera_.UpdateMatrix();
+		}
+
+		// ブロックの更新
+		for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
+			for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
+				if (!worldTransformBlock) // 空白ならスキップ
+					continue;
+
+				// アフィン変換行列の作成
+				worldTransformBlock->scale_ = {2.0f, 2.0f, 2.0f};
+				worldTransformBlock->rotation_ = {0.0f, 0.0f, 0.0f};
+				// worldTransformBlock->translation_ = {0, 0, 0};	// Initializeで設定したので変更しない
+
+				// 行列を定数バッファに転送
+				transform_.worldMatrixUpdate(*worldTransformBlock);
+			}
+		}
+
+		// 総当たり当たり判定
+		CheckAllCollisions();
+
+		break;
+
+	case GameScene::Phase::kDeath:
+		// デス演出の更新処理
+		// 天球の更新
+		skydome_->Update();
+
+		// 敵の更新
+		for (Enemy* enemy : enemies_) {
+			enemy->Update();
+		}
+
+		// パーティクルの更新
+		if (deathParticles_ != nullptr) {
+			deathParticles_->Update();
+		}
+
+		// カメラの処理
+		if (isDebugCameraActive_) {
+			// デバッグカメラの更新
+			debugCamera_->Update();
+
+			// カメラ位置に行列を適用
+			camera_.matView = debugCamera_->GetCamera().matView;
+			camera_.matProjection = debugCamera_->GetCamera().matProjection;
+
+			// ビュープロジェクション行列の更新と転送
+			camera_.TransferMatrix();
+
+		} else {
+			// ビュープロジェクション行列の更新と転送
+			camera_.UpdateMatrix();
+		}
+
+		// ブロックの更新
+		for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
+			for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
+				if (!worldTransformBlock) // 空白ならスキップ
+					continue;
+
+				// アフィン変換行列の作成
+				worldTransformBlock->scale_ = {2.0f, 2.0f, 2.0f};
+				worldTransformBlock->rotation_ = {0.0f, 0.0f, 0.0f};
+
+				// 行列を定数バッファに転送
+				transform_.worldMatrixUpdate(*worldTransformBlock);
+			}
+		}
+
+		break;
+
+	default:
+		break;
 	}
-
-	// パーティクルの更新
-	if (deathParticles_ != nullptr) {
-		deathParticles_->Update();
-	}
-
-	// カメラコントローラの更新
-	camaraController_->Update();
-
-	// 総当たり当たり判定
-	CheckAllCollisions();
 
 #ifdef _DEBUG
 	// デバッグ起動
@@ -201,23 +270,6 @@ void GameScene::Update() {
 		} else {
 			isDebugCameraActive_ = true;
 		}
-	}
-
-	// カメラの処理
-	if (isDebugCameraActive_) {
-		// デバッグカメラの更新
-		debugCamera_->Update();
-
-		// カメラ位置に行列を適用
-		camera_.matView = debugCamera_->GetCamera().matView;
-		camera_.matProjection = debugCamera_->GetCamera().matProjection;
-
-		// ビュープロジェクション行列の更新と転送
-		camera_.TransferMatrix();
-
-	} else {
-		// ビュープロジェクション行列の更新と転送
-		camera_.UpdateMatrix();
 	}
 
 #endif // DEBUG
@@ -332,4 +384,37 @@ bool GameScene::CheckAABBCollision(const AABB& aabb1, const AABB& aabb2) {
 	}
 
 	return isCollide;
+}
+
+/*-------------------- フェーズの切り替え --------------------*/
+void GameScene::ChangePhase() {
+	switch (phase_) {
+	case GameScene::Phase::kPlay:
+		// ゲームプレイフェーズの処理
+		if (player_->GetIsDead()) {
+			// 死亡演出フェーズに切り替え
+			phase_ = GameScene::Phase::kDeath;
+
+			// 自キャラの座標を取得
+			const Vector3 deathParticlesPosition = player_->GetWorldPos();
+
+			// 自機の座標を飛ばす	(強硬策だと思うので後で修正)
+			player_->SetWorldPos({-100.0f, -100.0f, -100.0f});
+			player_->Update();
+
+			// 自キャラの座標にパーティクルをセット
+			deathParticles_ = new DeathParticles();
+			deathParticles_->Initialize(modelParticles_, &camera_, deathParticlesPosition);
+		}
+
+		break;
+
+	case GameScene::Phase::kDeath:
+		// デス演出フェーズの処理
+
+		break;
+
+	default:
+		break;
+	}
 }
