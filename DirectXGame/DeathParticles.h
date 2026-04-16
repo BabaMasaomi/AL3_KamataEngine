@@ -50,4 +50,7 @@ public:
 	void Update();
 
 	void Draw();
+
+	// アクセッサ
+	bool GetIsFinished() const { return isFinished_; }
 };
