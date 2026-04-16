@@ -6,8 +6,8 @@ using namespace KamataEngine;
 // 初期化
 void TitleScene::Initialize() {
 	// タイトルづくり用変数の初期化
-	//// プレイヤーモデルの生成
-	//modelPlayer_ = Model::CreateFromOBJ("player", true);
+	// タイトルモデルの生成
+	//modelTitle_ = Model::CreateFromOBJ("title", true);
 }
 
 // 更新
