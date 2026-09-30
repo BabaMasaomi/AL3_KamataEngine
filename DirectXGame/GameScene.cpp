@@ -253,6 +253,8 @@ void GameScene::Update() {
 
 	case GameScene::Phase::kPlay:
 		// インゲームの更新処理
+
+		// プレイシーンのリセット
 		if (Input::GetInstance()->TriggerKey(DIK_R)) {
 			Initialize();
 		}

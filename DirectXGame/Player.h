@@ -200,16 +200,16 @@ private:
 	KamataEngine::Vector3 velocity_ = {};
 
 	// 左右移動の加速度
-	static inline const float kAcceleration = 0.025f;
+	static inline const float kAcceleration = 0.02f;
 
 	// 移動減衰の基本の値
-	static inline const float kAttenuation = 0.1f;
+	static inline const float kAttenuation = 0.11f;
 
 	// 着地時の減衰の基本の値
 	static inline const float kAttenuationLanding = 0.1f;
 
-	// 制限速度
-	static inline const float kLimitRunSpeed = 0.75f;
+	// 左右移動の制限速度
+	static inline const float kLimitRunSpeed = 0.40f;
 
 	// 左右の向き
 	LRDirection lrDirection_ = LRDirection::kRight;
@@ -224,7 +224,7 @@ private:
 	static inline const float kLimitFallSpeed_ = 0.75f;
 
 	// ジャンプ初速
-	static inline const float kJumpAcceleration_ = 1.0f;
+	static inline const float kJumpAcceleration_ = 1.05f;
 
 	// 壁にぶつかった時の減速率
 	static inline const float kAttenuationWall = 0.75f;
@@ -246,7 +246,7 @@ private:
 	float turnTimer_ = 0.0f;
 
 	// 旋回時間(秒)
-	static inline const float kTimeTurn = 0.3f;
+	static inline const float kTimeTurn = 0.2f;
 
 	/*--------------- 攻撃行動用 ---------------*/
 	// 突進開始位置
