@@ -253,6 +253,10 @@ void GameScene::Update() {
 
 	case GameScene::Phase::kPlay:
 		// インゲームの更新処理
+		if (Input::GetInstance()->TriggerKey(DIK_R)) {
+			Initialize();
+		}
+		
 		// 天球の更新
 		skydome_->Update();
 
