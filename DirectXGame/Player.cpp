@@ -281,7 +281,9 @@ void Player::BehaviorRootUpdate() {
 
 // 攻撃行動初期化
 void Player::BehaviorAttackInitialize() {
+	chargeTimer_ = 0.0f;
 	dashTimer_ = 0.0f;
+	gapTimer_ = 0.0f;
 	dashStartX_ = worldTransform_.translation_.x;
 	attackPhase_ = AttackPhase::kCharge;
 

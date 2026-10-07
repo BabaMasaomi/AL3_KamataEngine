@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "KamataEngine.h"
 #include "BasicCharacterComposition.h"
+#include "KamataEngine.h"
 #include "Transform.h"
 #include "temporaryAABB.h"
 
@@ -30,10 +30,10 @@ enum Corner {
 
 // 振る舞い
 enum class Behavior {
-	kRoot,		// 通常状態
-	kAttack,	// 攻撃中
-	kKnockBack,	// ノックバック
-	kUnKnown,	// 変更リクエスト無し
+	kRoot,      // 通常状態
+	kAttack,    // 攻撃中
+	kKnockBack, // ノックバック
+	kUnKnown,   // 変更リクエスト無し
 };
 
 // 攻撃フェーズ(型)
@@ -63,8 +63,8 @@ public:
 	void Update();
 
 	// ルートビヘイビア用更新
-	void BehaviorRootUpdate();		// 通常行動更新
-	void BehaviorAttackUpdate();	// 攻撃行動更新
+	void BehaviorRootUpdate();      // 通常行動更新
+	void BehaviorAttackUpdate();    // 攻撃行動更新
 	void BehaviorKnockBackUpdate(); // ノックバック更新
 
 	// 通常行動初期化
@@ -163,7 +163,7 @@ public:
 	// アクセッサ
 	// ゲッター
 	bool GetIsDead() { return isDead_; }
-	
+
 	// 平行移動した位置
 	KamataEngine::WorldTransform& GetWorldTransform() { return worldTransform_; }
 
@@ -201,7 +201,7 @@ private:
 
 	// 左右移動の加速度
 	static inline const float kAcceleration = 0.02f;
-	
+
 	// 空中移動の加速度倍率
 	static inline const float AccelerationMultiplier_ = 0.8f;
 
@@ -259,15 +259,15 @@ private:
 	const float kDashSpeed = 1.2f;
 
 	// 溜め時間管理
-	float chargeTimer_;
+	float chargeTimer_ = 0.0f;
 	const float kChargeTime_ = 0.1f;
 
 	// 突進時間管理
-	float dashTimer_;
+	float dashTimer_ = 0.0f;
 	const float kDashTime_ = 0.2f;
 
 	// 後隙時間管理
-	float gapTimer_;
+	float gapTimer_ = 0.0f;
 	const float kGapTime_ = 0.1f;
 
 	// 現在の攻撃フェーズ
