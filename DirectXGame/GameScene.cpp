@@ -258,7 +258,7 @@ void GameScene::Update() {
 		if (Input::GetInstance()->TriggerKey(DIK_R)) {
 			Initialize();
 		}
-		
+
 		// 天球の更新
 		skydome_->Update();
 
@@ -620,6 +620,15 @@ void GameScene::ChangePhase() {
 
 	case GameScene::Phase::kPlay:
 		// ゲームプレイフェーズの処理
+
+		// クリア時
+		if (player_->GetWorldPos().x >= goalPointX_) {
+			phase_ = GameScene::Phase::kClear;
+
+			break;
+		}
+
+		// 死亡時
 		if (player_->GetIsDead()) {
 			// 死亡演出フェーズに切り替え
 			phase_ = GameScene::Phase::kDeath;
@@ -646,6 +655,14 @@ void GameScene::ChangePhase() {
 		}
 
 		break;
+
+	case GameScene::Phase::kClear:
+		// クリア演出フェーズの処理
+		phase_ = GameScene::Phase::kFadeOut;
+		fade_->Start(Fade::Status::FadeOut, 0.5f);
+
+		break;
+
 	case GameScene::Phase::kFadeOut:
 		if (fade_->IsFinished()) {
 			// 終了フラグを立てる

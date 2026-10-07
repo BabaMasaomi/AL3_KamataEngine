@@ -35,7 +35,10 @@ private:
 	MapChipField* mapChipField_ = nullptr;
 
 	// Translateクラス内の関数を使える様にする
-	Transform transform_;	
+	Transform transform_;
+
+	// ゴール地点(仮でここに配置)
+	float goalPointX_ = 20.0f;
 
 	/*-------------------- プレイヤー --------------------*/
 	// プレイヤーの3Dモデル
