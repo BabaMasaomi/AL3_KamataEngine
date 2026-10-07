@@ -62,17 +62,18 @@ public:
 	/// </summary>
 	void Update();
 
-	// ルートビヘイビア用更新
-	void BehaviorRootUpdate();      // 通常行動更新
-	void BehaviorAttackUpdate();    // 攻撃行動更新
-	void BehaviorKnockBackUpdate(); // ノックバック更新
-
-	// 通常行動初期化
+	// ルートビヘイビア用初期化・更新
+	// 通常行動
 	void BehaviorRootInitialize();
-	// 攻撃行動初期化
+	void BehaviorRootUpdate();
+
+	// 攻撃行動
 	void BehaviorAttackInitialize();
-	// ノックバック初期化
+	void BehaviorAttackUpdate();
+
+	// ノックバック
 	void BehaviorKnockBackInitialize();
+	void BehaviorKnockBackUpdate();
 
 	/// <summary>
 	/// 自機の描画
