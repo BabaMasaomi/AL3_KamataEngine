@@ -89,7 +89,7 @@ void Enemy::BehaviorRootInitialize() {}
 // 通常行動更新
 void Enemy::BehaviorRootUpdate() {
 	// 移動処理
-	worldTransform_.translation_.x += velocity_.x;
+	//worldTransform_.translation_.x += velocity_.x;	// 仕様変更とデバッグのため無効化
 
 	// 歩行アニメーション処理
 	// タイマーを加算(1/60秒)

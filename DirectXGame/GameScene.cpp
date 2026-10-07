@@ -62,7 +62,7 @@ void GameScene::Initialize() {
 	mapChipField_ = new MapChipField;
 
 	// ファイル読み込み
-	mapChipField_->LoadMapChipCsv("Resources/block.csv");
+	mapChipField_->LoadMapChipCsv("Resources/map.csv");
 
 	// 表示ブロックの生成
 	GenerateBlocks();
@@ -82,6 +82,24 @@ void GameScene::Initialize() {
 	// 座標をマップチップ番号で指定
 	Vector3 playerPos = mapChipField_->GetMapChipPositionByIndex(13, 17);
 
+	bool foundPlayer = false;
+
+	// マップからプレイヤーの開始位置を探す
+	for (uint32_t y = 0; y < MapChipField::kNumBlockVertical && !foundPlayer; ++y) {
+
+		for (uint32_t x = 0; x < MapChipField::kNumBlockHorizontal; ++x) {
+
+			if (mapChipField_->GetMapChipTypeByIndex(x, y) != MapChipType::kPlayer) {
+				continue;
+			}
+
+			playerPos = mapChipField_->GetMapChipPositionByIndex(x, y);
+
+			foundPlayer = true;
+			break;
+		}
+	}
+
 	// プレイヤーの初期化
 	player_->Initialize(model_, modelAttack_, &camera_, playerPos);
 
@@ -95,20 +113,28 @@ void GameScene::Initialize() {
 	// 敵のワールドトランスフォームの初期化
 	worldTransformEnemy_.Initialize();
 
-	for (int32_t i = 0; i < 3; i++) {
-		// 敵の生成
-		Enemy* newEnemy = new Enemy();
+	for (uint32_t y = 0; y < MapChipField::kNumBlockVertical; ++y) {
+		for (uint32_t x = 0; x < MapChipField::kNumBlockHorizontal; ++x) {
 
-		// 座標をマップチップ番号で指定
-		Vector3 enemyPos = mapChipField_->GetMapChipPositionByIndex(40 + i * 5, 15);
+			// 敵の番号でなければ次のマスへ
+			if (mapChipField_->GetMapChipTypeByIndex(x, y) != MapChipType::kEnemy) {
+				continue;
+			}
 
-		// 敵の初期化
-		newEnemy->Initialize(modelEnemy_, &camera_, enemyPos);
-		// リストに追加
-		enemies_.push_back(newEnemy);
+			// 指定マスの中心座標を取得
+			Vector3 enemyPos = mapChipField_->GetMapChipPositionByIndex(x, y);
 
-		// 敵にゲームシーンを渡す
-		newEnemy->SetGameScene(this);
+			// 敵の生成
+			Enemy* newEnemy = new Enemy();
+
+			// 敵の初期化
+			newEnemy->Initialize(modelEnemy_, &camera_, enemyPos);
+			// リストに追加
+			enemies_.push_back(newEnemy);
+
+			// 敵にゲームシーンを渡す
+			newEnemy->SetGameScene(this);
+		}
 	}
 
 	// マップチップデータのセット

@@ -38,7 +38,7 @@ private:
 	Transform transform_;
 
 	// ゴール地点(仮でここに配置)
-	float goalPointX_ = 10000.0f;
+	float goalPointX_ = 40.0f;
 
 	// リトライ要求
 	bool retryRequested_ = false;

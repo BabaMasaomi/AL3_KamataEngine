@@ -5,6 +5,8 @@
 enum class MapChipType {
 	kBlank, // 空白
 	kBlock, // ブロック
+	kEnemy, // 通常敵の出現位置
+	kPlayer, // プレイヤーの開始位置
 };
 
 struct MapChipData {

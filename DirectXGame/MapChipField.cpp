@@ -17,6 +17,8 @@ namespace { // 無名名前空間(グローバル変数の名前の衝突を避�
 std::map<std::string, MapChipType> mapChipTable = {
     {"0", MapChipType::kBlank},
     {"1", MapChipType::kBlock},
+    {"2", MapChipType::kEnemy},
+    {"3", MapChipType::kPlayer},
 };
 
 }
