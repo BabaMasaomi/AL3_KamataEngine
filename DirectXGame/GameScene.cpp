@@ -7,17 +7,23 @@ using namespace KamataEngine;
 GameScene::GameScene() {}
 GameScene::~GameScene() {
 	delete player_; // プレイヤーの解放
+	delete model_;
+	delete modelAttack_;
 
 	for (Enemy* enemy : enemies_) {
 		delete enemy; // 敵の解放(範囲for文を使う)
 	}
+	delete modelEnemy_;
+	delete guardEffectModel_;
 
+	delete skydome_;
 	delete modelSkydome_; // 天球の3Dモデルの解放
-	delete modelBlocks_;  // ブロックの3Dモデルの解放
+	delete modelBlocks_;  // ブロックの3Dモデルの解放	
 
 	for (HitEffect* hitEffect : hitEffects_) {
-		delete hitEffect; // ヒットエフェクトの3Dモデルの解放
+		delete hitEffect;	// ヒットエフェクトの解放
 	}
+	delete hitEffectModel_;	// ヒットエフェクトの3Dモデルの解放
 
 	// 複数ブロックの解放処理
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
@@ -30,6 +36,7 @@ GameScene::~GameScene() {
 	for (DeathParticles* deathParticles : {deathParticles_}) {
 		delete deathParticles; // パーティクルの解放
 	}
+	delete modelParticles_;
 
 	delete mapChipField_;     // マップチップフィールドの解放
 	delete camaraController_; // カメラコントローラの解放
@@ -255,8 +262,10 @@ void GameScene::Update() {
 		// インゲームの更新処理
 
 		// プレイシーンのリセット
+		// リトライ要求
 		if (Input::GetInstance()->TriggerKey(DIK_R)) {
-			Initialize();
+			retryRequested_ = true;
+			return;
 		}
 
 		// 天球の更新

@@ -40,6 +40,9 @@ private:
 	// ゴール地点(仮でここに配置)
 	float goalPointX_ = 100.0f;
 
+	// リトライ要求
+	bool retryRequested_ = false;
+
 	/*-------------------- プレイヤー --------------------*/
 	// プレイヤーの3Dモデル
 	KamataEngine::Model* model_ = nullptr;
@@ -159,5 +162,9 @@ public:
 	void ChangePhase();
 
 	/*-------------------- アクセッサ --------------------*/
+	// 終了判定を取得
 	bool GetIsFinished() const { return finished_; }
+
+	// リトライ要求を取得
+	bool GetIsRetryRequested() const { return retryRequested_; }
 };

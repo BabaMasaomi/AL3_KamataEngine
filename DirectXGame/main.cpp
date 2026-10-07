@@ -117,6 +117,20 @@ void ChangeScene() {
 
 		break;
 	case Scene::kGame:
+
+		// リトライ要求があればゲームシーンを作り直す
+		if (gameScene->GetIsRetryRequested()) {
+			// 古いゲームシーンを解放
+			delete gameScene;
+			gameScene = nullptr;
+
+			// 新しいゲームシーンを生成・初期化
+			gameScene = new GameScene;
+			gameScene->Initialize();
+
+			break;
+		}
+
 		// ゲームシーンが終了したら
 		if (gameScene->GetIsFinished()) {
 			// シーン変更
