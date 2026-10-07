@@ -220,8 +220,12 @@ void Player::BehaviorRootUpdate() {
 			}
 		}
 
-		// 加速/減速
-		velocity_.x += acceleration.x;
+		// 加速、減速
+		if (onGround_) {
+			velocity_.x += acceleration.x;
+		} else {
+			velocity_.x += AccelerationMultiplier_ * acceleration.x;
+		}
 
 		// 最大速度制限
 		velocity_.x = std::clamp(velocity_.x, -kLimitRunSpeed, kLimitRunSpeed);

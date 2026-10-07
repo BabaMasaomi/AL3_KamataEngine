@@ -18,10 +18,11 @@ private:
 
 	// ゲームのフェーズ(型)
 	enum class Phase {
-		kFadeIn,  // フェードイン
-		kPlay,    // プレイ中
-		kDeath,   // 死亡
-		kFadeOut, // フェードアウト
+		kFadeIn,	// フェードイン
+		kPlay,		// プレイ中
+		kDeath,		// 死亡
+		kClear,		// クリア
+		kFadeOut,	// フェードアウト
 	};
 
 	// ゲームのフェーズ(変数)
@@ -34,7 +35,7 @@ private:
 	MapChipField* mapChipField_ = nullptr;
 
 	// Translateクラス内の関数を使える様にする
-	Transform transform_;
+	Transform transform_;	
 
 	/*-------------------- プレイヤー --------------------*/
 	// プレイヤーの3Dモデル

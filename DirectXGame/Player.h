@@ -201,6 +201,9 @@ private:
 
 	// 左右移動の加速度
 	static inline const float kAcceleration = 0.02f;
+	
+	// 空中移動の加速度倍率
+	static inline const float AccelerationMultiplier_ = 0.8f;
 
 	// 移動減衰の基本の値
 	static inline const float kAttenuation = 0.11f;
