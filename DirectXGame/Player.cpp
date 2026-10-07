@@ -236,7 +236,7 @@ void Player::BehaviorRootUpdate() {
 	}
 
 	// 接地している時
-	if (onGround_) { // 地上]
+	if (onGround_) { // 地上
 
 		// ジャンプ入力
 		if (Input::GetInstance()->TriggerKey(DIK_UP)) {
@@ -285,10 +285,8 @@ void Player::BehaviorAttackInitialize() {
 	dashTimer_ = 0.0f;
 	gapTimer_ = 0.0f;
 	dashStartX_ = worldTransform_.translation_.x;
-	attackPhase_ = AttackPhase::kCharge;
-
-	// 原因確認用：攻撃開始時の縦速度を止める
 	velocity_.y = 0.0f;
+	attackPhase_ = AttackPhase::kCharge;
 
 	// 現在の向きを記録
 	turnFirstRotationY_ = worldTransform_.rotation_.y;
@@ -572,13 +570,13 @@ void Player::MapCollisionCheckRight(CollisionMapInfo& info) {
 	    worldTransform_.translation_.z,
 	};
 
-	// 既存の角座標計算を利用
+	// 判定位置を取得
 	Vector3 checkPositions[] = {
 	    CornerPosition(nextCenter, kRightTop),
 	    CornerPosition(nextCenter, kRightBottom),
 	};
 
-	// 床・天井を横壁として拾いにくくする
+	// 床、天井を壁として判定しない様にする
 	checkPositions[0].y -= kMargin;
 	checkPositions[1].y += kMargin;
 
@@ -623,12 +621,13 @@ void Player::MapCollisionCheckLeft(CollisionMapInfo& info) {
 	    worldTransform_.translation_.z,
 	};
 
+	// 判定位置を取得
 	Vector3 checkPositions[] = {
 	    CornerPosition(nextCenter, kLeftTop),
 	    CornerPosition(nextCenter, kLeftBottom),
 	};
 
-	// 床・天井を横壁として拾いにくくする
+	// 床、天井を壁として判定しない様にする
 	checkPositions[0].y -= kMargin;
 	checkPositions[1].y += kMargin;
 
@@ -669,8 +668,7 @@ void Player::MoveReflectingResult(const CollisionMapInfo& info) {
 void Player::ContactWithCeiling(const CollisionMapInfo& info) {
 	// 天井に当たったか
 	if (info.isCeilingCollide) {
-		// DebugText::GetInstance()->ConsolePrintf("hit ceiking\n");
-		velocity_.y = 0.0f;
+		// 今回は天井にぶつかった際にvelocityを減衰させないので、空白になっている
 	}
 }
 
@@ -678,7 +676,6 @@ void Player::ContactWithCeiling(const CollisionMapInfo& info) {
 void Player::ContactWithWall(const CollisionMapInfo& info) {
 	// 壁に当たったか
 	if (info.isWallCollide) {
-		// DebugText::GetInstance()->ConsolePrintf("hit wall\n");
 		velocity_.x = velocity_.x * (1.0f - kAttenuationWall);
 	}
 }
@@ -698,7 +695,7 @@ void Player::SwitchGroundingState(const CollisionMapInfo& info) {
 			// 移動後の4つの角の座標
 			std::array<Vector3, kNumCorner> positionsNew = {};
 
-			// AL2_05_08スライド22の余白の追加をここに移動中
+			// 余白の追加
 			for (uint32_t i = 0; i < positionsNew.size(); ++i) {
 				positionsNew[i] = CornerPosition(
 				    {worldTransform_.translation_.x + info.MovementAmount.x, worldTransform_.translation_.y + info.MovementAmount.y, worldTransform_.translation_.z + info.MovementAmount.z},
@@ -747,8 +744,8 @@ void Player::SwitchGroundingState(const CollisionMapInfo& info) {
 			onGround_ = true;
 			canAirAttack_ = true;
 
-			// 着地時にX方向速度を減衰させる(無くていいよ)
-			// velocity_.x *= (1.0f - kAttenuationLanding);
+			// 着地時にX方向速度を減衰させる
+			velocity_.x *= (1.0f - kAttenuationLanding);
 
 			// Y方向速度を0にする
 			velocity_.y = 0.0f;
