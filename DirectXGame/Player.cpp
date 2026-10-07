@@ -287,6 +287,9 @@ void Player::BehaviorAttackInitialize() {
 	dashStartX_ = worldTransform_.translation_.x;
 	attackPhase_ = AttackPhase::kCharge;
 
+	// 原因確認用：攻撃開始時の縦速度を止める
+	velocity_.y = 0.0f;
+
 	// 現在の向きを記録
 	turnFirstRotationY_ = worldTransform_.rotation_.y;
 }
