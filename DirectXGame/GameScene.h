@@ -2,7 +2,7 @@
 #include "CameraController.h"
 #include "DeathParticles.h"
 #include "Enemy.h"
-#include "ShieldEnemy.h"
+//#include "ShieldEnemy.h"
 #include "Fade.h"
 #include "HitEffect.h"
 #include "KamataEngine.h"
@@ -38,7 +38,7 @@ private:
 	Transform transform_;
 
 	// ゴール地点(仮でここに配置)
-	float goalPointX_ = 20.0f;
+	float goalPointX_ = 100.0f;
 
 	/*-------------------- プレイヤー --------------------*/
 	// プレイヤーの3Dモデル
@@ -63,14 +63,14 @@ private:
 	std::list<Enemy*> enemies_ = {};
 
 	/*-------------------- 盾敵 --------------------*/
-	// 敵の3Dモデル
-	KamataEngine::Model* modelShieldEnemy_ = nullptr;
+	//// 敵の3Dモデル
+	//KamataEngine::Model* modelShieldEnemy_ = nullptr;
 
-	// 敵のワールドトランスフォーム
-	KamataEngine::WorldTransform worldTransformShieldEnemy_;
+	//// 敵のワールドトランスフォーム
+	//KamataEngine::WorldTransform worldTransformShieldEnemy_;
 
-	// 敵のリスト
-	std::list<ShieldEnemy*> shieldEnemies_ = {};
+	//// 敵のリスト
+	//std::list<ShieldEnemy*> shieldEnemies_ = {};
 
 	/*-------------------- 天球 --------------------*/
 	// 天球の3Dモデル
@@ -149,8 +149,8 @@ public:
 
 	// 総当たり当たり判定
 	void CheckAllCollisions();
-	// 盾持ちの当たり判定
-	void CheckAllCollisionsShield();
+	//// 盾持ちの当たり判定
+	//void CheckAllCollisionsShield();
 
 	// AABB同士の当たり判定
 	bool CheckAABBCollision(const AABB& aabb1, const AABB& aabb2);

@@ -108,27 +108,27 @@ void GameScene::Initialize() {
 	// enemies_->SetMapChipField(mapChipField_);		// マップチップと当たり判定を取る時に必要
 
 	/*--------------- 盾敵 ---------------*/
-	// 敵の3Dモデルの生成
-	modelShieldEnemy_ = Model::CreateFromOBJ("shieldEnemy", true);
+	//// 盾敵の3Dモデルの生成
+	//modelShieldEnemy_ = Model::CreateFromOBJ("shieldEnemy", true);
 
-	// 敵のワールドトランスフォームの初期化
-	worldTransformShieldEnemy_.Initialize();
+	//// 盾敵のワールドトランスフォームの初期化
+	//worldTransformShieldEnemy_.Initialize();
 
-	for (int32_t i = 0; i < 3; i++) {
-		// 敵の生成
-		ShieldEnemy* newShieldEnemy = new ShieldEnemy();
+	//for (int32_t i = 0; i < 3; i++) {
+	//	// 盾敵の生成
+	//	ShieldEnemy* newShieldEnemy = new ShieldEnemy();
 
-		// 座標をマップチップ番号で指定
-		Vector3 shieldEnemyPos = mapChipField_->GetMapChipPositionByIndex(40 + i * 5, 18);
+	//	// 座標をマップチップ番号で指定
+	//	Vector3 shieldEnemyPos = mapChipField_->GetMapChipPositionByIndex(40 + i * 5, 18);
 
-		// 敵の初期化
-		newShieldEnemy->Initialize(modelShieldEnemy_, &camera_, shieldEnemyPos);
-		// リストに追加
-		shieldEnemies_.push_back(newShieldEnemy);
+	//	// 盾敵の初期化
+	//	newShieldEnemy->Initialize(modelShieldEnemy_, &camera_, shieldEnemyPos);
+	//	// リストに追加
+	//	shieldEnemies_.push_back(newShieldEnemy);
 
-		// 敵にゲームシーンを渡す
-		newShieldEnemy->SetGameScene(this);
-	}
+	//	// 盾敵にゲームシーンを渡す
+	//	newShieldEnemy->SetGameScene(this);
+	//}
 
 	/*--------------- 天球 ---------------*/
 	// 天球の3Dモデルの生成
@@ -199,15 +199,15 @@ void GameScene::Update() {
 		// フェード処理処理宙にプレイヤーを正しい位置に描画させる
 		player_->Update();
 
-		// 敵の更新
+		// 盾敵の更新
 		for (Enemy* enemy : enemies_) {
 			enemy->Update();
 		}
 
 		// 盾敵の更新
-		for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
-			shieldEnemy->Update();
-		}
+		//for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+		//	shieldEnemy->Update();
+		//}
 
 		// カメラコントローラの更新
 		camaraController_->Update();
@@ -279,19 +279,19 @@ void GameScene::Update() {
 			return false;
 		});
 
-		// 盾敵の更新
-		for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
-			shieldEnemy->Update();
-		}
+		//// 盾敵の更新
+		//for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+		//	shieldEnemy->Update();
+		//}
 
-		// デスフラグの立った敵を削除
-		shieldEnemies_.remove_if([](ShieldEnemy* shieldEnemy) {
-			if (shieldEnemy->GetIsDead()) {
-				delete shieldEnemy;
-				return true;
-			}
-			return false;
-		});
+		//// デスフラグの立った盾敵を削除
+		//shieldEnemies_.remove_if([](ShieldEnemy* shieldEnemy) {
+		//	if (shieldEnemy->GetIsDead()) {
+		//		delete shieldEnemy;
+		//		return true;
+		//	}
+		//	return false;
+		//});
 
 		// ヒットエフェクトの更新
 		for (HitEffect* hitEffect : hitEffects_) {
@@ -346,7 +346,7 @@ void GameScene::Update() {
 
 		// 総当たり当たり判定
 		CheckAllCollisions();
-		CheckAllCollisionsShield();
+		//CheckAllCollisionsShield();
 
 		break;
 
@@ -360,10 +360,10 @@ void GameScene::Update() {
 			enemy->Update();
 		}
 
-		// 盾敵の更新
-		for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
-			shieldEnemy->Update();
-		}
+		//// 盾敵の更新
+		//for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+		//	shieldEnemy->Update();
+		//}
 
 		// ヒットエフェクトの更新
 		for (HitEffect* hitEffect : hitEffects_) {
@@ -466,10 +466,10 @@ void GameScene::Draw() {
 	for (Enemy* enemy : enemies_) {
 		enemy->Draw();
 	}
-	// 敵の描画
-	for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
-		shieldEnemy->Draw();
-	}
+	//// 盾敵の描画
+	//for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+	//	shieldEnemy->Draw();
+	//}
 
 	// ヒットエフェクトの描画
 	for (HitEffect* hitEffect : hitEffects_) {
@@ -556,36 +556,36 @@ void GameScene::CheckAllCollisions() {
 }
 
 /*-------------------- 総当たり当たり判定 --------------------*/
-void GameScene::CheckAllCollisionsShield() {
-	AABB aabb1, aabb2;
-
-	// 自キャラのAABB取得
-	aabb1 = player_->GetAABB();
-
-	// 敵全員と当たり判定
-	for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
-		// コリジョン無効の敵はスキップ
-		if (shieldEnemy->IsCollisionDisEnabled()) {
-			continue;
-		}
-		// 敵のAABB取得
-		aabb2 = shieldEnemy->GetAABB();
-
-		// 当たり判定
-		if (CheckAABBCollision(aabb1, aabb2)) {
-			// 衝突応答
-			// 自キャラの衝突判定時の処理
-			if (player_->CanReceiveDamage()) {
-				player_->OnCollisionShieldEnemy(shieldEnemy);
-			}
-
-			// 敵の衝突判定時の処理
-			if (player_->CanAttackEnemy()) {
-				shieldEnemy->OnCollisionPlayer(player_);
-			}
-		}
-	}
-}
+//void GameScene::CheckAllCollisionsShield() {
+//	AABB aabb1, aabb2;
+//
+//	// 自キャラのAABB取得
+//	aabb1 = player_->GetAABB();
+//
+//	// 盾敵全員と当たり判定
+//	for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+//		// コリジョン無効の盾敵はスキップ
+//		if (shieldEnemy->IsCollisionDisEnabled()) {
+//			continue;
+//		}
+//		// 盾敵のAABB取得
+//		aabb2 = shieldEnemy->GetAABB();
+//
+//		// 当たり判定
+//		if (CheckAABBCollision(aabb1, aabb2)) {
+//			// 衝突応答
+//			// 自キャラの衝突判定時の処理
+//			if (player_->CanReceiveDamage()) {
+//				player_->OnCollisionShieldEnemy(shieldEnemy);
+//			}
+//
+//			// 盾敵の衝突判定時の処理
+//			if (player_->CanAttackEnemy()) {
+//				shieldEnemy->OnCollisionPlayer(player_);
+//			}
+//		}
+//	}
+//}
 
 /*-------------------- AABB同士の当たり判定 --------------------*/
 bool GameScene::CheckAABBCollision(const AABB& aabb1, const AABB& aabb2) {
