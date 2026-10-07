@@ -30,6 +30,7 @@ public:
 	/// </summary>
 	void Update();
 
+	// 種類別のカメラ更新
 	void UpdateFollow();
 	void UpdateForcedScroll();
 
@@ -65,7 +66,12 @@ private:
 	static inline const float kInterpolationRate = 0.2f;
 
 	// 速度掛け率
-	static inline const float kVelocityBias = 7.5f;
+	// 横方向
+	static inline const float kVelocityBiasX = 7.5f;
+
+	//縦方向
+	static inline const float kVelocityBiasY = 0.5f;
+
 
 	// 追従対象の各方向へのカメラ移動範囲(-left,+right,-bottom,+topの順)
 	static inline const Rect cameraMovementMargin = {-100.0f, 100.0f, -100.0f, 100.0f};

@@ -18,12 +18,12 @@ GameScene::~GameScene() {
 
 	delete skydome_;
 	delete modelSkydome_; // 天球の3Dモデルの解放
-	delete modelBlocks_;  // ブロックの3Dモデルの解放	
+	delete modelBlocks_;  // ブロックの3Dモデルの解放
 
 	for (HitEffect* hitEffect : hitEffects_) {
-		delete hitEffect;	// ヒットエフェクトの解放
+		delete hitEffect; // ヒットエフェクトの解放
 	}
-	delete hitEffectModel_;	// ヒットエフェクトの3Dモデルの解放
+	delete hitEffectModel_; // ヒットエフェクトの3Dモデルの解放
 
 	// 複数ブロックの解放処理
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
@@ -116,12 +116,12 @@ void GameScene::Initialize() {
 
 	/*--------------- 盾敵 ---------------*/
 	//// 盾敵の3Dモデルの生成
-	//modelShieldEnemy_ = Model::CreateFromOBJ("shieldEnemy", true);
+	// modelShieldEnemy_ = Model::CreateFromOBJ("shieldEnemy", true);
 
 	//// 盾敵のワールドトランスフォームの初期化
-	//worldTransformShieldEnemy_.Initialize();
+	// worldTransformShieldEnemy_.Initialize();
 
-	//for (int32_t i = 0; i < 3; i++) {
+	// for (int32_t i = 0; i < 3; i++) {
 	//	// 盾敵の生成
 	//	ShieldEnemy* newShieldEnemy = new ShieldEnemy();
 
@@ -180,8 +180,10 @@ void GameScene::Initialize() {
 	// 追従対象をセット
 	camaraController_->SetTarget(player_);
 
+	// 現在読み込んでいるマップから移動範囲を計算
+	CameraController::Rect cameraArea = CalculateCameraMovableArea();
 	// 移動範囲を指定
-	camaraController_->SetMovableArea(CameraController::Rect{20.0f, 180.0f, 10.0f, 200.0f});
+	camaraController_->SetMovableArea(cameraArea);
 
 	// リセット(瞬間合わせ)
 	camaraController_->Reset();
@@ -212,7 +214,7 @@ void GameScene::Update() {
 		}
 
 		// 盾敵の更新
-		//for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+		// for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
 		//	shieldEnemy->Update();
 		//}
 
@@ -289,18 +291,18 @@ void GameScene::Update() {
 		});
 
 		//// 盾敵の更新
-		//for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+		// for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
 		//	shieldEnemy->Update();
-		//}
+		// }
 
 		//// デスフラグの立った盾敵を削除
-		//shieldEnemies_.remove_if([](ShieldEnemy* shieldEnemy) {
+		// shieldEnemies_.remove_if([](ShieldEnemy* shieldEnemy) {
 		//	if (shieldEnemy->GetIsDead()) {
 		//		delete shieldEnemy;
 		//		return true;
 		//	}
 		//	return false;
-		//});
+		// });
 
 		// ヒットエフェクトの更新
 		for (HitEffect* hitEffect : hitEffects_) {
@@ -355,7 +357,7 @@ void GameScene::Update() {
 
 		// 総当たり当たり判定
 		CheckAllCollisions();
-		//CheckAllCollisionsShield();
+		// CheckAllCollisionsShield();
 
 		break;
 
@@ -370,9 +372,9 @@ void GameScene::Update() {
 		}
 
 		//// 盾敵の更新
-		//for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+		// for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
 		//	shieldEnemy->Update();
-		//}
+		// }
 
 		// ヒットエフェクトの更新
 		for (HitEffect* hitEffect : hitEffects_) {
@@ -476,9 +478,9 @@ void GameScene::Draw() {
 		enemy->Draw();
 	}
 	//// 盾敵の描画
-	//for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+	// for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
 	//	shieldEnemy->Draw();
-	//}
+	// }
 
 	// ヒットエフェクトの描画
 	for (HitEffect* hitEffect : hitEffects_) {
@@ -508,7 +510,7 @@ void GameScene::CreateHitEffect(Vector3 pos, HitEffectType type) {
 /*-------------------- 表示ブロックの生成 --------------------*/
 void GameScene::GenerateBlocks() {
 	// 要素数
-	uint32_t kNumBlockVirtical = MapChipField::kNumBlockVirchical;
+	uint32_t kNumBlockVirtical = MapChipField::kNumBlockVertical;
 	uint32_t kNumBlockHorizontal = MapChipField::kNumBlockHorizontal;
 
 	// 要素数を更新する
@@ -565,7 +567,7 @@ void GameScene::CheckAllCollisions() {
 }
 
 /*-------------------- 総当たり当たり判定 --------------------*/
-//void GameScene::CheckAllCollisionsShield() {
+// void GameScene::CheckAllCollisionsShield() {
 //	AABB aabb1, aabb2;
 //
 //	// 自キャラのAABB取得
@@ -594,7 +596,7 @@ void GameScene::CheckAllCollisions() {
 //			}
 //		}
 //	}
-//}
+// }
 
 /*-------------------- AABB同士の当たり判定 --------------------*/
 bool GameScene::CheckAABBCollision(const AABB& aabb1, const AABB& aabb2) {
@@ -616,6 +618,76 @@ bool GameScene::CheckAABBCollision(const AABB& aabb1, const AABB& aabb2) {
 	}
 
 	return isCollide;
+}
+
+/*-------------------- マップのブロック配置からカメラ移動範囲を計算 --------------------*/
+CameraController::Rect GameScene::CalculateCameraMovableArea() {
+	bool foundBlock = false;
+
+	float mapLeft = 0.0f;
+	float mapRight = 0.0f;
+	float mapBottom = 0.0f;
+	float mapTop = 0.0f;
+
+	for (uint32_t y = 0; y < MapChipField::kNumBlockVertical; ++y) {
+
+		for (uint32_t x = 0; x < MapChipField::kNumBlockHorizontal; ++x) {
+
+			if (mapChipField_->GetMapChipTypeByIndex(x, y) != MapChipType::kBlock) {
+				continue;
+			}
+
+			MapChipField::Rect blockRect = mapChipField_->GetRectByIndex(x, y);
+
+			if (!foundBlock) {
+				mapLeft = blockRect.left;
+				mapRight = blockRect.right;
+				mapBottom = blockRect.bottom;
+				mapTop = blockRect.top;
+
+				foundBlock = true;
+				continue;
+			}
+
+			mapLeft = (std::min)(mapLeft, blockRect.left);
+			mapRight = (std::max)(mapRight, blockRect.right);
+
+			mapBottom = (std::min)(mapBottom, blockRect.bottom);
+			mapTop = (std::max)(mapTop, blockRect.top);
+		}
+	}
+
+	if (!foundBlock) {
+		return CameraController::Rect{0.0f, 0.0f, 0.0f, 0.0f};
+	}
+
+	
+	//現在のカメラ距離Z=-30.0fのだいたいの表示範囲	
+	constexpr float kCameraHalfWidth = 21.0f;
+	constexpr float kCameraHalfHeight = kCameraHalfWidth * 9.0f / 16.0f;
+
+	float cameraLeft = mapLeft + kCameraHalfWidth;
+	float cameraRight = mapRight - kCameraHalfWidth;
+
+	float cameraBottom = mapBottom + kCameraHalfHeight;
+	float cameraTop = mapTop - kCameraHalfHeight;
+
+	// 画面より小さいマップにも対応
+	if (cameraLeft > cameraRight) {
+		float center = (mapLeft + mapRight) * 0.5f;
+
+		cameraLeft = center;
+		cameraRight = center;
+	}
+
+	if (cameraBottom > cameraTop) {
+		float center = (mapBottom + mapTop) * 0.5f;
+
+		cameraBottom = center;
+		cameraTop = center;
+	}
+
+	return CameraController::Rect{cameraLeft, cameraRight, cameraBottom, cameraTop};
 }
 
 /*-------------------- フェーズの切り替え --------------------*/

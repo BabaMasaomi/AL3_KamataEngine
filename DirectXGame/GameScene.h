@@ -38,7 +38,7 @@ private:
 	Transform transform_;
 
 	// ゴール地点(仮でここに配置)
-	float goalPointX_ = 100.0f;
+	float goalPointX_ = 10000.0f;
 
 	// リトライ要求
 	bool retryRequested_ = false;
@@ -157,6 +157,9 @@ public:
 
 	// AABB同士の当たり判定
 	bool CheckAABBCollision(const AABB& aabb1, const AABB& aabb2);
+
+	// マップのブロック配置からカメラ移動範囲を計算
+	CameraController::Rect CalculateCameraMovableArea();
 
 	// フェーズの切り替え
 	void ChangePhase();
