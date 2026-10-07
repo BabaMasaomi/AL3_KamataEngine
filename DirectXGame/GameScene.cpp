@@ -508,7 +508,7 @@ void GameScene::CreateHitEffect(Vector3 pos, HitEffectType type) {
 /*-------------------- 表示ブロックの生成 --------------------*/
 void GameScene::GenerateBlocks() {
 	// 要素数
-	uint32_t kNumBlockVirtical = MapChipField::kNumBlockVirchical;
+	uint32_t kNumBlockVirtical = MapChipField::kNumBlockVertical;
 	uint32_t kNumBlockHorizontal = MapChipField::kNumBlockHorizontal;
 
 	// 要素数を更新する
