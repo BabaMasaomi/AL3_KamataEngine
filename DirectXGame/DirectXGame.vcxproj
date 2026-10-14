@@ -156,9 +156,11 @@
   <ItemGroup>
     <ClCompile Include="BasicCharacterComposition.cpp" />
     <ClCompile Include="CameraController.cpp" />
+    <ClCompile Include="GameClearScene.cpp" />
     <ClCompile Include="DeathParticles.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="Fade.cpp" />
+    <ClCompile Include="GameOverScene.cpp" />
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="HitEffect.cpp" />
     <ClCompile Include="main.cpp" />
@@ -271,9 +273,11 @@
   <ItemGroup>
     <ClInclude Include="BasicCharacterComposition.h" />
     <ClInclude Include="CameraController.h" />
+    <ClInclude Include="GameClearScene.h" />
     <ClInclude Include="DeathParticles.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="Fade.h" />
+    <ClInclude Include="GameOverScene.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="HitEffect.h" />
     <ClInclude Include="MapChipField.h" />
