@@ -1,4 +1,5 @@
 ﻿#include "GameScene.h"
+#include <cmath>
 
 // KamataEngine::を毎回入力しなくてもいい様にする
 using namespace KamataEngine;
@@ -18,12 +19,12 @@ GameScene::~GameScene() {
 
 	delete skydome_;
 	delete modelSkydome_; // 天球の3Dモデルの解放
-	delete modelBlocks_;  // ブロックの3Dモデルの解放	
+	delete modelBlocks_;  // ブロックの3Dモデルの解放
 
 	for (HitEffect* hitEffect : hitEffects_) {
-		delete hitEffect;	// ヒットエフェクトの解放
+		delete hitEffect; // ヒットエフェクトの解放
 	}
-	delete hitEffectModel_;	// ヒットエフェクトの3Dモデルの解放
+	delete hitEffectModel_; // ヒットエフェクトの3Dモデルの解放
 
 	// 複数ブロックの解放処理
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
@@ -142,12 +143,12 @@ void GameScene::Initialize() {
 
 	/*--------------- 盾敵 ---------------*/
 	//// 盾敵の3Dモデルの生成
-	//modelShieldEnemy_ = Model::CreateFromOBJ("shieldEnemy", true);
+	// modelShieldEnemy_ = Model::CreateFromOBJ("shieldEnemy", true);
 
 	//// 盾敵のワールドトランスフォームの初期化
-	//worldTransformShieldEnemy_.Initialize();
+	// worldTransformShieldEnemy_.Initialize();
 
-	//for (int32_t i = 0; i < 3; i++) {
+	// for (int32_t i = 0; i < 3; i++) {
 	//	// 盾敵の生成
 	//	ShieldEnemy* newShieldEnemy = new ShieldEnemy();
 
@@ -206,10 +207,37 @@ void GameScene::Initialize() {
 	// 追従対象をセット
 	camaraController_->SetTarget(player_);
 
-	// 移動範囲を指定
-	camaraController_->SetMovableArea(CameraController::Rect{20.0f, 180.0f, 10.0f, 200.0f});
+	// まずプレイヤーに合わせてカメラの初期位置を設定
+	camaraController_->Reset();
 
-	// リセット(瞬間合わせ)
+	// マップの上下端
+	const float blockHeight = MapChipField::kBlockHeight;
+	const float mapHeight = blockHeight * MapChipField::kNumBlockVertical;
+
+	const float mapBottom = -blockHeight / 2.0f;
+	const float mapTop = mapBottom + mapHeight;
+
+	// マップ中心面（Z=0）までの距離
+	const float cameraDistance = std::abs(camera_.translation_.z);
+
+	// 画面に映る高さの半分
+	const float viewHalfHeight = cameraDistance * std::tan(camera_.fovAngleY / 2.0f);
+
+	// 画面がマップの上下にはみ出さないカメラ中心の範囲
+	float cameraBottom = mapBottom + viewHalfHeight;
+	float cameraTop = mapTop - viewHalfHeight;
+
+	// マップが画面より低い場合は、縦方向を中央に固定
+	if (cameraBottom > cameraTop) {
+		const float mapCenterY = (mapBottom + mapTop) / 2.0f;
+		cameraBottom = mapCenterY;
+		cameraTop = mapCenterY;
+	}
+
+	// 移動範囲を指定(横方向は現在の設定を維持)
+	camaraController_->SetMovableArea(CameraController::Rect{20.0f, 180.0f, cameraBottom, cameraTop});
+
+	// 計算した移動範囲を開始位置にも適用
 	camaraController_->Reset();
 
 	// デバッグカメラの生成
@@ -238,7 +266,7 @@ void GameScene::Update() {
 		}
 
 		// 盾敵の更新
-		//for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+		// for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
 		//	shieldEnemy->Update();
 		//}
 
@@ -315,18 +343,18 @@ void GameScene::Update() {
 		});
 
 		//// 盾敵の更新
-		//for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+		// for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
 		//	shieldEnemy->Update();
-		//}
+		// }
 
 		//// デスフラグの立った盾敵を削除
-		//shieldEnemies_.remove_if([](ShieldEnemy* shieldEnemy) {
+		// shieldEnemies_.remove_if([](ShieldEnemy* shieldEnemy) {
 		//	if (shieldEnemy->GetIsDead()) {
 		//		delete shieldEnemy;
 		//		return true;
 		//	}
 		//	return false;
-		//});
+		// });
 
 		// ヒットエフェクトの更新
 		for (HitEffect* hitEffect : hitEffects_) {
@@ -381,7 +409,7 @@ void GameScene::Update() {
 
 		// 総当たり当たり判定
 		CheckAllCollisions();
-		//CheckAllCollisionsShield();
+		// CheckAllCollisionsShield();
 
 		break;
 
@@ -396,9 +424,9 @@ void GameScene::Update() {
 		}
 
 		//// 盾敵の更新
-		//for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+		// for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
 		//	shieldEnemy->Update();
-		//}
+		// }
 
 		// ヒットエフェクトの更新
 		for (HitEffect* hitEffect : hitEffects_) {
@@ -502,9 +530,9 @@ void GameScene::Draw() {
 		enemy->Draw();
 	}
 	//// 盾敵の描画
-	//for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+	// for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
 	//	shieldEnemy->Draw();
-	//}
+	// }
 
 	// ヒットエフェクトの描画
 	for (HitEffect* hitEffect : hitEffects_) {
@@ -591,7 +619,7 @@ void GameScene::CheckAllCollisions() {
 }
 
 /*-------------------- 総当たり当たり判定 --------------------*/
-//void GameScene::CheckAllCollisionsShield() {
+// void GameScene::CheckAllCollisionsShield() {
 //	AABB aabb1, aabb2;
 //
 //	// 自キャラのAABB取得
@@ -620,7 +648,7 @@ void GameScene::CheckAllCollisions() {
 //			}
 //		}
 //	}
-//}
+// }
 
 /*-------------------- AABB同士の当たり判定 --------------------*/
 bool GameScene::CheckAABBCollision(const AABB& aabb1, const AABB& aabb2) {

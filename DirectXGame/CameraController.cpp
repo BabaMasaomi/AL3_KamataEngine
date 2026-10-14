@@ -66,11 +66,21 @@ void CameraController::UpdateForcedScroll() {
 }
 
 void CameraController::Reset() {
-	// 追従対象のワールドトランスフォームを参照
+	if (!target_ || !camera_) {
+		return;
+	}
+
 	const WorldTransform& targetWorldTransform = target_->GetWorldTransform();
 
-	// 追従対象とオフセットからカメラの座標を計算
+	// プレイヤーに合わせる
 	camera_->translation_.x = targetWorldTransform.translation_.x + targetOffset_.x;
 	camera_->translation_.y = targetWorldTransform.translation_.y + targetOffset_.y;
 	camera_->translation_.z = targetWorldTransform.translation_.z + targetOffset_.z;
+
+	// 通常更新と同じ移動範囲を適用
+	camera_->translation_.x = std::clamp(camera_->translation_.x, movableArea_.left, movableArea_.right);
+	camera_->translation_.y = std::clamp(camera_->translation_.y, movableArea_.bottom, movableArea_.top);
+
+	// 初期位置を描画へ反映
+	camera_->UpdateMatrix();
 }
