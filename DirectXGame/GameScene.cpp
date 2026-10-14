@@ -20,6 +20,7 @@ GameScene::~GameScene() {
 	delete skydome_;
 	delete modelSkydome_; // 天球の3Dモデルの解放
 	delete modelBlocks_;  // ブロックの3Dモデルの解放
+	delete modelGoal_;
 
 	for (HitEffect* hitEffect : hitEffects_) {
 		delete hitEffect; // ヒットエフェクトの解放
@@ -185,6 +186,23 @@ void GameScene::Initialize() {
 	/*--------------- ブロック ---------------*/
 	// ブロックの3Dモデルの生成
 	modelBlocks_ = Model::CreateFromOBJ("block", true);
+
+	/*--------------- ゴール ---------------*/
+	// ゴールの3Dモデルの生成
+	modelGoal_ = Model::CreateFromOBJ("goal", true);
+
+	worldTransformGoal_.Initialize();
+
+	// ゴールのワールドトランスフォームの初期化
+	worldTransformGoal_.scale_ = {2.0f, 2.0f, 2.0f};
+	worldTransformGoal_.translation_ = {
+	    goalPointX_,
+	    2.0f,	// 配置したい高さ
+	    0.0f,
+	};
+	worldTransformGoal_.rotation_ = {0.0f, 0.0f, 0.0f};
+
+	transform_.worldMatrixUpdate(worldTransformGoal_);
 
 	/*--------------- パーティクル ---------------*/
 	// パーティクルの3Dモデルの生成
@@ -533,6 +551,9 @@ void GameScene::Draw() {
 			modelBlocks_->Draw(*worldTransformBlock, camera_);
 		}
 	}
+
+	// ゴール地点の描画
+	modelGoal_->Draw(worldTransformGoal_, camera_);
 
 	// 敵の描画
 	for (Enemy* enemy : enemies_) {

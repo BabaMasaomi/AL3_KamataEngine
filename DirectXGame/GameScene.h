@@ -35,10 +35,7 @@ private:
 	MapChipField* mapChipField_ = nullptr;
 
 	// Translateクラス内の関数を使える様にする
-	Transform transform_;
-
-	// ゴール地点(仮でここに配置)
-	float goalPointX_ = 40.0f;
+	Transform transform_;	
 
 	// リトライ要求
 	bool retryRequested_ = false;
@@ -94,6 +91,16 @@ private:
 
 	// ブロック用可変個配列
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
+
+	/*-------------------- ゴール地点 --------------------*/
+	// ゴール地点(最終的にマップチップに取り込む)
+	float goalPointX_ = 40.0f;
+
+	// ゴールのモデル
+	KamataEngine::Model* modelGoal_ = nullptr;
+
+	// ゴールのワールドトランスフォーム
+	KamataEngine::WorldTransform worldTransformGoal_;
 
 	/*-------------------- パーティクル --------------------*/
 	// パーティクルの3Dモデル
