@@ -93,8 +93,11 @@ private:
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
 
 	/*-------------------- ゴール地点 --------------------*/
-	// ゴール地点(最終的にマップチップに取り込む)
-	float goalPointX_ = 40.0f;
+	// マップにゴールがあるか
+	bool hasGoal_ = false;
+
+	// ゴールの判定範囲
+	AABB goalAABB_ = {};
 
 	// ゴールのモデル
 	KamataEngine::Model* modelGoal_ = nullptr;

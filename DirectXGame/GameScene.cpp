@@ -188,20 +188,42 @@ void GameScene::Initialize() {
 	modelBlocks_ = Model::CreateFromOBJ("block", true);
 
 	/*--------------- ゴール ---------------*/
-	// ゴールの3Dモデルの生成
+	// ゴールの3Dモデルを生成
 	modelGoal_ = Model::CreateFromOBJ("goal", true);
 
 	worldTransformGoal_.Initialize();
-
-	// ゴールのワールドトランスフォームの初期化
 	worldTransformGoal_.scale_ = {2.0f, 2.0f, 2.0f};
-	worldTransformGoal_.translation_ = {
-	    goalPointX_,
-	    2.0f,	// 配置したい高さ
-	    0.0f,
-	};
 	worldTransformGoal_.rotation_ = {0.0f, 0.0f, 0.0f};
 
+	// ゴールがあるか
+	hasGoal_ = false;
+	goalAABB_ = {};
+
+	// 最初に見つけたゴールを使用
+	for (uint32_t y = 0; y < MapChipField::kNumBlockVertical && !hasGoal_; ++y) {
+		for (uint32_t x = 0; x < MapChipField::kNumBlockHorizontal; ++x) {
+
+			if (mapChipField_->GetMapChipTypeByIndex(x, y) != MapChipType::kGoal) {
+				continue;
+			}
+
+			// ゴールマスの中心と範囲
+			const Vector3 goalPos = mapChipField_->GetMapChipPositionByIndex(x, y);
+			const MapChipField::Rect rect = mapChipField_->GetRectByIndex(x, y);
+
+			// 目印をマスの中心に配置
+			worldTransformGoal_.translation_ = goalPos;
+
+			// マップの1マス分をクリア判定にする
+			goalAABB_.min = {rect.left, rect.bottom, goalPos.z - MapChipField::kBlockWidth / 2.0f};
+			goalAABB_.max = {rect.right, rect.top, goalPos.z + MapChipField::kBlockWidth / 2.0f};
+
+			hasGoal_ = true;
+			break;
+		}
+	}
+
+	// 描画用の行列へ反映
 	transform_.worldMatrixUpdate(worldTransformGoal_);
 
 	/*--------------- パーティクル ---------------*/
@@ -553,6 +575,11 @@ void GameScene::Draw() {
 	}
 
 	// ゴール地点の描画
+	if (hasGoal_) {
+		modelGoal_->Draw(worldTransformGoal_, camera_);
+	}
+
+	// ゴール地点の描画
 	modelGoal_->Draw(worldTransformGoal_, camera_);
 
 	// 敵の描画
@@ -714,10 +741,11 @@ void GameScene::ChangePhase() {
 	case GameScene::Phase::kPlay:
 		// ゲームプレイフェーズの処理
 
-		// クリア時
-		if (player_->GetWorldPos().x >= goalPointX_) {
-			phase_ = GameScene::Phase::kClear;
+		// 生存中のプレイヤーがゴールマスに触れたらクリア
+		if (hasGoal_ && !player_->GetIsDead() && CheckAABBCollision(player_->GetAABB(), goalAABB_)) {
 
+			isClear_ = true;
+			phase_ = GameScene::Phase::kClear;
 			break;
 		}
 

@@ -5,6 +5,7 @@
 enum class MapChipType {
 	kBlank, // 空白
 	kBlock, // ブロック
+	kGoal,   // ゴール
 	kEnemy, // 通常敵の出現位置
 	kPlayer, // プレイヤーの開始位置
 };
