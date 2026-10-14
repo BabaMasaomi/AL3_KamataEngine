@@ -138,14 +138,26 @@ void ChangeScene() {
 
 		// ゲームシーンが終了したら
 		if (gameScene->GetIsFinished()) {
-			// シーン変更
-			scene = Scene::kGameClear;
+			// 削除する前に結果を保存する
+			const bool isClear = gameScene->GetIsClear();
+
 			// 旧シーンの解放
 			delete gameScene;
 			gameScene = nullptr;
 			// 新シーンの生成と初期化
-			gameClearScene = new GameClearScene;
-			gameClearScene->Initialize();
+			if (isClear) {
+				// シーン変更
+				scene = Scene::kGameClear;
+
+				gameClearScene = new GameClearScene;
+				gameClearScene->Initialize();
+			} else {
+				// シーン変更
+				scene = Scene::kGameOver;
+
+				gameOverScene = new GameOverScene;
+				gameOverScene->Initialize();
+			}
 		}
 
 		break;

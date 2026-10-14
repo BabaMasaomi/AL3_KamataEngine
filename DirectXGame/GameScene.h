@@ -43,6 +43,9 @@ private:
 	// リトライ要求
 	bool retryRequested_ = false;
 
+	// クリアしたか
+	bool isClear_ = false;
+
 	/*-------------------- プレイヤー --------------------*/
 	// プレイヤーの3Dモデル
 	KamataEngine::Model* model_ = nullptr;
@@ -170,4 +173,7 @@ public:
 
 	// リトライ要求を取得
 	bool GetIsRetryRequested() const { return retryRequested_; }
+
+	// クリア判定を取得
+	bool GetIsClear() const { return isClear_; }
 };

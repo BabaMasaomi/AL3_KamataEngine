@@ -20,7 +20,7 @@ void GameClearScene::Initialize() {
 	camera_.Initialize();
 
 	// ゲームクリア用フォントのモデル
-	modelGameClear_ = Model::CreateFromOBJ("titleFont", true); // ゲームクリアフォントの3Dモデルを生成
+	modelGameClear_ = Model::CreateFromOBJ("clearFont", true); // ゲームクリアフォントの3Dモデルを生成
 	worldTransformGameClear_.Initialize();                     // ゲームクリアのワールドトランスフォームの初期化
 	worldTransformGameClear_.translation_ = {0.0f, 5.0f, 0.0f};
 	worldTransformGameClear_.scale_ = {2.0f, 2.0f, 2.0f};
@@ -68,6 +68,7 @@ void GameClearScene::Update() {
 
 	// プレイヤーを回す
 	worldTransformPlayer_.rotation_.y += 0.02f;
+	worldTransformPlayer_.rotation_.x += 0.02f;
 
 	// 更新を反映
 	transform_.worldMatrixUpdate(worldTransformGameClear_);

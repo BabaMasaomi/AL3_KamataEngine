@@ -68,6 +68,11 @@ void GameScene::Initialize() {
 	// 表示ブロックの生成
 	GenerateBlocks();
 
+	// リトライ要求フラグ
+	retryRequested_ = false;
+	// クリア判定フラグ
+	isClear_ = false;
+
 	/*--------------- プレイヤー ---------------*/
 	// プレイヤーの3Dモデルの生成
 	model_ = Model::CreateFromOBJ("player", true);
@@ -715,6 +720,8 @@ void GameScene::ChangePhase() {
 		break;
 
 	case GameScene::Phase::kDeath:
+		isClear_ = false;
+
 		// デス演出フェーズの処理
 		if (deathParticles_ && deathParticles_->GetIsFinished()) {
 			phase_ = GameScene::Phase::kFadeOut;
@@ -724,6 +731,8 @@ void GameScene::ChangePhase() {
 		break;
 
 	case GameScene::Phase::kClear:
+		isClear_ = true;
+
 		// クリア演出フェーズの処理
 		phase_ = GameScene::Phase::kFadeOut;
 		fade_->Start(Fade::Status::FadeOut, 0.5f);

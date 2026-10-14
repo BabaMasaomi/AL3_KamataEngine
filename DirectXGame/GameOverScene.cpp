@@ -20,7 +20,7 @@ void GameOverScene::Initialize() {
 	camera_.Initialize();
 
 	// ゲームオーバー用フォントのモデル
-	modelGameOver_ = Model::CreateFromOBJ("titleFont", true); // ゲームオーバーフォントの3Dモデルを生成
+	modelGameOver_ = Model::CreateFromOBJ("GameOverFont", true); // ゲームオーバーフォントの3Dモデルを生成
 	worldTransformGameOver_.Initialize();                     // ゲームオーバーのワールドトランスフォームの初期化
 	worldTransformGameOver_.translation_ = {0.0f, 5.0f, 0.0f};
 	worldTransformGameOver_.scale_ = {2.0f, 2.0f, 2.0f};
@@ -59,15 +59,11 @@ void GameOverScene::Update() {
 		if (fade_->IsFinished()) {
 			finished_ = true;
 		}
-		worldTransformPlayer_.rotation_.y += 1.0f;
 		break;
 
 	default:
 		break;
 	}
-
-	// プレイヤーを回す
-	worldTransformPlayer_.rotation_.y += 0.02f;
 
 	// 更新を反映
 	transform_.worldMatrixUpdate(worldTransformGameOver_);
