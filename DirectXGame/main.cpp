@@ -1,4 +1,6 @@
-﻿#include "GameScene.h"
+﻿#include "GameClearScene.h"
+#include "GameOverScene.h"
+#include "GameScene.h"
 #include "KamataEngine.h"
 #include "TitleScene.h"
 #include <Windows.h>
@@ -10,6 +12,8 @@ using namespace KamataEngine;
 // 変数
 TitleScene* titleScene = nullptr;
 GameScene* gameScene = nullptr;
+GameClearScene* gameClearScene = nullptr;
+GameOverScene* gameOverScene = nullptr;
 
 // シーン (型)
 enum class Scene {
@@ -18,6 +22,8 @@ enum class Scene {
 
 	kTitle,
 	kGame,
+	kGameClear,
+	kGameOver,
 };
 
 // 現在のシーン (型)
@@ -88,9 +94,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// 解放処理
 	delete titleScene;
 	delete gameScene;
-
-	// nullputrの代入(解放処理とセットで)
-	// titleScene = nullptr;
+	delete gameClearScene;
+	delete gameOverScene;
 
 	// エンジンの終了
 	Finalize();
@@ -134,10 +139,39 @@ void ChangeScene() {
 		// ゲームシーンが終了したら
 		if (gameScene->GetIsFinished()) {
 			// シーン変更
-			scene = Scene::kTitle;
+			scene = Scene::kGameClear;
 			// 旧シーンの解放
 			delete gameScene;
 			gameScene = nullptr;
+			// 新シーンの生成と初期化
+			gameClearScene = new GameClearScene;
+			gameClearScene->Initialize();
+		}
+
+		break;
+	case Scene::kGameClear:
+		// ゲームクリアシーンが終了したら
+		if (gameClearScene->GetIsFinished()) {
+			// シーン変更
+			scene = Scene::kTitle;
+			// 旧シーンの解放
+			delete gameClearScene;
+			gameClearScene = nullptr;
+			// 新シーンの生成と初期化
+			titleScene = new TitleScene;
+			titleScene->Initialize();
+		}
+
+		break;
+
+	case Scene::kGameOver:
+		// ゲームオーバーシーンが終了したら
+		if (gameOverScene->GetIsFinished()) {
+			// シーン変更
+			scene = Scene::kTitle;
+			// 旧シーンの解放
+			delete gameOverScene;
+			gameOverScene = nullptr;
 			// 新シーンの生成と初期化
 			titleScene = new TitleScene;
 			titleScene->Initialize();
@@ -162,6 +196,16 @@ void UpdateScene() {
 		gameScene->Update();
 
 		break;
+	case Scene::kGameClear:
+		// ゲームクリアシーンの更新
+		gameClearScene->Update();
+
+		break;
+	case Scene::kGameOver:
+		// ゲームオーバーシーンの更新
+		gameOverScene->Update();
+
+		break;
 	default:
 		break;
 	}
@@ -178,6 +222,16 @@ void DrawScene() {
 	case Scene::kGame:
 		// ゲームシーンの描画
 		gameScene->Draw();
+
+		break;
+	case Scene::kGameClear:
+		// ゲームクリアシーンの描画
+		gameClearScene->Draw();
+
+		break;
+	case Scene::kGameOver:
+		// ゲームクオーバーシーンの描画
+		gameOverScene->Draw();
 
 		break;
 	default:

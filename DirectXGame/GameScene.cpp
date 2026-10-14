@@ -482,7 +482,11 @@ void GameScene::Update() {
 
 		break;
 
-	case ::GameScene::Phase::kFadeOut:
+	case GameScene::Phase::kClear:
+
+		break;
+
+	case GameScene::Phase::kFadeOut:
 		fade_->Update();
 		break;
 

@@ -122,10 +122,10 @@ private:
 	// デバッグカメラ有効
 	bool isDebugCameraActive_ = false;
 
-	/*-------------------- フェード用 --------------------*/
 	// デバッグカメラ
 	KamataEngine::DebugCamera* debugCamera_ = nullptr;
 
+	/*-------------------- フェード用 --------------------*/
 	// フェード用
 	Fade* fade_ = nullptr;
 
