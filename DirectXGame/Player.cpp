@@ -1,6 +1,8 @@
 ﻿#define NOMINMAX
 #include "Player.h"
 #include "MapChipField.h"
+#include "GameScene.h"
+#include <cmath>
 #include <algorithm>
 #include <cassert>
 #include <numbers>
@@ -39,12 +41,20 @@ void Player::Initialize(Model* model, Model* modelAttack, Camera* camera, const 
 	// 3Dモデルの生成
 	model_ = model;
 	modelAttack_ = modelAttack;
+
+	// 攻撃機能の変数	
+	canDash_ = true;
+	dashMovedThisFrame_ = false;
+	dashRemainingDistance_ = 0.0f;
 }
 
 /// <summary>
 /// 自機の更新
 /// </summary>
 void Player::Update() {
+	// 
+	dashMovedThisFrame_ = false;
+
 	// 振る舞いを変更する
 	if (behaiviorRequest_ != Behavior::kUnKnown) {
 		behaivior_ = behaiviorRequest_;
@@ -110,26 +120,28 @@ void Player::Update() {
 		isPushedByCamera = true;
 	}
 
-	// 圧死判定用に数値を管理
-	collisionMapInfo.MovementAmount.x += pushX;
+	if (behaivior_ != Behavior::kAttack) {
+		// 圧死判定用に数値を管理
+		collisionMapInfo.MovementAmount.x += pushX;
 
-	// マップ衝突チェック
-	MapCollisionCheck(collisionMapInfo);
+		// マップ衝突チェック
+		MapCollisionCheck(collisionMapInfo);
 
-	/*========== ③判定結果を反映して移動 ==========*/
-	MoveReflectingResult(collisionMapInfo);
+		/*========== ③判定結果を反映して移動 ==========*/
+		MoveReflectingResult(collisionMapInfo);
 
-	/*========== ④天井に接触している時の処理 ==========*/
-	ContactWithCeiling(collisionMapInfo);
+		/*========== ④天井に接触している時の処理 ==========*/
+		ContactWithCeiling(collisionMapInfo);
 
-	/*========== ⑤壁に接触している時の処理 ==========*/
-	ContactWithWall(collisionMapInfo);
+		/*========== ⑤壁に接触している時の処理 ==========*/
+		ContactWithWall(collisionMapInfo);
 
-	/*========== ⑥接地状態の切り替え ==========*/
-	SwitchGroundingState(collisionMapInfo);
+		/*========== ⑥接地状態の切り替え ==========*/
+		SwitchGroundingState(collisionMapInfo);
 
-	if (isPushedByCamera && collisionMapInfo.isWallCollide) {
-		isDead_ = true;
+		if (isPushedByCamera && collisionMapInfo.isWallCollide) {
+			isDead_ = true;
+		}
 	}
 
 	// 攻撃エフェクトの位置更新
@@ -152,6 +164,16 @@ void Player::BehaviorRootInitialize() {
 	// 回転角を初期化
 	turnTimer_ = 0.0f;
 	turnFirstRotationY_ = worldTransform_.rotation_.y;
+
+	worldTransform_.rotation_.x = 0.0f;
+	worldTransform_.rotation_.z = 0.0f;
+
+	worldTransform_.rotation_.y = lrDirection_ == LRDirection::kRight ? std::numbers::pi_v<float> / 2.0f : std::numbers::pi_v<float> * 3.0f / 2.0f;
+
+	turnFirstRotationY_ = worldTransform_.rotation_.y;
+
+	// 通常移動に戻ったら、重力と床判定で接地を確認し直す
+	onGround_ = false;
 }
 
 /// <summary>
@@ -160,16 +182,9 @@ void Player::BehaviorRootInitialize() {
 void Player::BehaviorRootUpdate() {
 	// 攻撃キーを押したら
 	if (Input::GetInstance()->TriggerKey(DIK_Z)) {
-		// 地上なら何度でも攻撃可能
-		if (onGround_) {
-			// 攻撃ビヘイビアをリクエスト
-			behaiviorRequest_ = Behavior::kAttack;
-
-		} else if (canAirAttack_) {
-			// 空中なら1回だけ
-			// 攻撃ビヘイビアをリクエスト
-			behaiviorRequest_ = Behavior::kAttack;
-			canAirAttack_ = false;
+		// 攻撃権がある場合
+		if (TryStartDash()) {
+			return;
 		}
 	}
 
@@ -282,85 +297,135 @@ void Player::BehaviorRootUpdate() {
 // 攻撃行動初期化
 void Player::BehaviorAttackInitialize() {
 	chargeTimer_ = 0.0f;
-	dashTimer_ = 0.0f;
 	gapTimer_ = 0.0f;
-	dashStartX_ = worldTransform_.translation_.x;
-	velocity_.y = 0.0f;
+
+	dashRemainingDistance_ = kDashDistance;
 	attackPhase_ = AttackPhase::kCharge;
 
-	// 現在の向きを記録
-	turnFirstRotationY_ = worldTransform_.rotation_.y;
+	velocity_ = {};
+	onGround_ = false;
+	turnTimer_ = 0.0f;
+	isAttackEffect_ = false;
+
+	// 現在のモデルは通常時にYを90度回すと右を向く。
+	// その状態からZ回転で進行方向へ向ける。
+	worldTransform_.rotation_.x = 0.0f;
+	worldTransform_.rotation_.y = std::numbers::pi_v<float> / 2.0f;
+	worldTransform_.rotation_.z = std::atan2(dashDirection_.y, dashDirection_.x);
 }
 
 /// <summary>
 /// 攻撃行動更新
 /// </summary>
 void Player::BehaviorAttackUpdate() {
+	constexpr float deltaTime = 1.0f / 60.0f;
+
+	// 通常移動の速度は使用しない
+	velocity_ = {};
 
 	switch (attackPhase_) {
-	case AttackPhase::kCharge: {
-		chargeTimer_ += 1.0f / 60.0f;
+	case AttackPhase::kCharge:
+		chargeTimer_ += deltaTime;
 
-		float t = std::clamp(chargeTimer_ / kChargeTime_, 0.0f, 1.0f);
-
-		// 回転を補間
-		float destinationRotationY = (lrDirection_ == LRDirection::kRight) ? std::numbers::pi_v<float> / 2.0f : std::numbers::pi_v<float> * 3.0f / 2.0f;
-		worldTransform_.rotation_.y = EaseInOut(turnFirstRotationY_, destinationRotationY, t);
-		// Scaleを変更
-		worldTransform_.scale_.z = EaseOut(2.0f, 0.6f, t);
-		worldTransform_.scale_.y = EaseOut(2.0f, 3.2f, t);
-		// 突進動作へ移行
 		if (chargeTimer_ >= kChargeTime_) {
 			attackPhase_ = AttackPhase::kDash;
-			chargeTimer_ = 0.0f;
 			isAttackEffect_ = true;
 		}
 		break;
-	}
 
 	case AttackPhase::kDash: {
-		// 突進時間を計測
-		dashTimer_ += 1.0f / 60.0f;
+		dashFrameStart_ = GetWorldPos();
+		dashMovedThisFrame_ = true;
 
-		// 移動
-		velocity_.x = lrDirection_ == LRDirection::kRight ? kDashSpeed : -kDashSpeed;
+		// 最後のフレームは残り距離だけ移動する
+		const float step = std::min(kDashSpeed, dashRemainingDistance_);
 
-		float t = std::clamp(dashTimer_ / kDashTime_, 0.0f, 1.0f);
+		const Vector3 movement = {
+		    dashDirection_.x * step,
+		    dashDirection_.y * step,
+		    0.0f,
+		};
 
-		worldTransform_.scale_.z = EaseOut(0.6f, 2.6f, t);
-		worldTransform_.scale_.y = EaseIn(3.2f, 1.4f, t);
-		// 後隙へ移行
-		if (dashTimer_ >= kDashTime_) {
-			velocity_.x = 0.0f;
+		// 突進経路全体でブロックとの衝突を確認
+		const float moveRate = gameScene_->GetDashMoveRate(dashFrameStart_, movement, kWidth / 2.0f, kHeight / 2.0f);
+
+		const bool hitWall = moveRate < 1.0f;
+
+		float actualDistance = step;
+
+		if (hitWall) {
+			// 壁へ密着しすぎないよう、少し手前で止める
+			actualDistance = std::max(0.0f, step * moveRate - kMargin);
+		}
+
+		worldTransform_.translation_.x += dashDirection_.x * actualDistance;
+		worldTransform_.translation_.y += dashDirection_.y * actualDistance;
+
+		dashRemainingDistance_ = std::max(0.0f, dashRemainingDistance_ - actualDistance);
+
+		if (hitWall || dashRemainingDistance_ <= 0.0001f) {
 			attackPhase_ = AttackPhase::kGap;
-			dashTimer_ = 0.0f;
-		}
-		break;
-	}
-
-	case AttackPhase::kGap: {
-		gapTimer_ += 1.0f / 60.0f;
-
-		float t = std::clamp(gapTimer_ / kGapTime_, 0.0f, 1.0f);
-
-		worldTransform_.scale_.z = EaseOut(2.6f, 2.0f, t);
-		worldTransform_.scale_.y = EaseOut(1.4f, 2.0f, t);
-		// 突進動作を終了
-		if (gapTimer_ >= kGapTime_) {
-			behaiviorRequest_ = Behavior::kRoot;
 			gapTimer_ = 0.0f;
-			EndAttack();
+			isAttackEffect_ = false;
 		}
 		break;
 	}
 
-	case AttackPhase::kNone: {
+	case AttackPhase::kGap:
+		gapTimer_ += deltaTime;
+
+		if (gapTimer_ >= kGapTime_) {
+			EndAttack();
+			behaiviorRequest_ = Behavior::kRoot;
+		}
 		break;
+
+	case AttackPhase::kNone:
+		break;
+	}
+}
+
+bool Player::TryStartDash() {
+	if (!canDash_ || isDead_ || !gameScene_) {
+		return false;
 	}
 
-	default:
-		break;
+	const Vector3 start = GetWorldPos();
+	Vector3 targetPos = {};
+
+	if (!gameScene_->FindDashTarget(start, kDashRange, kWidth / 2.0f, kHeight / 2.0f, targetPos)) {
+		return false;
 	}
+
+	const float dx = targetPos.x - start.x;
+	const float dy = targetPos.y - start.y;
+	const float length = std::sqrt(dx * dx + dy * dy);
+
+	if (length > 0.0001f) {
+		dashDirection_ = {dx / length, dy / length, 0.0f};
+	} else {
+		// 中心がほぼ同じ場合は現在の左右方向へ
+		dashDirection_ = {
+		    lrDirection_ == LRDirection::kRight ? 1.0f : -1.0f,
+		    0.0f,
+		    0.0f,
+		};
+	}
+
+	if (dashDirection_.x > 0.0001f) {
+		lrDirection_ = LRDirection::kRight;
+	} else if (dashDirection_.x < -0.0001f) {
+		lrDirection_ = LRDirection::kLeft;
+	}
+
+	// 対象が見つかった場合だけ消費
+	canDash_ = false;
+
+	// 溜め中に開始位置がずれないようにする
+	velocity_ = {};
+
+	behaiviorRequest_ = Behavior::kAttack;
+	return true;
 }
 
 /// <summary>
@@ -742,7 +807,6 @@ void Player::SwitchGroundingState(const CollisionMapInfo& info) {
 		if (info.isLanding) {
 			// 着地状態に切り替える
 			onGround_ = true;
-			canAirAttack_ = true;
 
 			// 着地時にX方向速度を減衰させる
 			velocity_.x *= (1.0f - kAttenuationLanding);
@@ -811,15 +875,12 @@ bool Player::IsAttack() {
 }
 
 // 敵を攻撃できるか
-bool Player::CanAttackEnemy() const {
-	// 攻撃中かつ突進部分の間
-	return behaivior_ == Behavior::kAttack && attackPhase_ == AttackPhase::kDash;
-}
+bool Player::CanAttackEnemy() const { return dashMovedThisFrame_; }
 
 // ダメージを受けるか
 bool Player::CanReceiveDamage() const {
 	// 攻撃中じゃない
-	return behaivior_ != Behavior::kAttack;
+	return CanAttackEnemy();
 }
 
 // ノックバック要求を受け取る
@@ -838,5 +899,6 @@ void Player::EndAttack() {
 	attackPhase_ = AttackPhase::kNone;
 	// タイマーをリセット
 	chargeTimer_ = 0.0f;
-	dashTimer_ = 0.0f;
+	gapTimer_ = 0.0f;
+	dashRemainingDistance_ = 0.0f;
 }

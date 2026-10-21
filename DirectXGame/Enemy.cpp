@@ -163,11 +163,16 @@ AABB Enemy::GetAABB() {
 
 void Enemy::OnCollisionPlayer(Player* player) {
 	// 通常時じゃなければ判定を飛ばす
-	if (behavior_ != BehaviorEnemy::kRoot) {
+	if (behavior_ != BehaviorEnemy::kRoot || behaviorRequest_ == BehaviorEnemy::kDeath || isCollisionDisenabled_) {
 		return;
 	}
-	// 攻撃中のプレイヤーと接触したら死亡
+
+	// 撃破を確定
 	behaviorRequest_ = BehaviorEnemy::kDeath;
+	isCollisionDisenabled_ = true;
+
+	// 死亡演出の終了を待たずに回復
+	player->RestoreDash();
 
 	// 敵と自キャラの中間にエフェクトを生成
 	Vector3 effectPos = Vector3(

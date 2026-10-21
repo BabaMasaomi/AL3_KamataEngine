@@ -7,6 +7,7 @@
 // 前方宣言
 class MapChipField;
 
+class GameScene;
 class Enemy;
 class ShieldEnemy;
 
@@ -181,6 +182,17 @@ public:
 	// マップチップ情報
 	void SetMapChipField(MapChipField* mapChipField) { mapChipField_ = mapChipField; }
 
+	// ゲームシーン取得
+	void SetGameScene(GameScene* gameScene) { gameScene_ = gameScene; }
+
+	// 敵を倒したときに呼ぶ
+	void RestoreDash() { canDash_ = true; }
+
+	bool GetCanDash() const { return canDash_; }
+
+	// 今フレームの突進経路
+	const KamataEngine::Vector3& GetDashFrameStart() const { return dashFrameStart_; }
+
 private:
 	// Translateクラス内の関数を使える様にする
 	Transform transform_;
@@ -253,8 +265,8 @@ private:
 	static inline const float kTimeTurn = 0.2f;
 
 	/*--------------- 攻撃行動用 ---------------*/
-	// 突進開始位置
-	float dashStartX_ = 0.0f;
+	//// 突進開始位置
+	//float dashStartX_ = 0.0f;
 
 	// 突進速度
 	const float kDashSpeed = 1.2f;
@@ -263,22 +275,45 @@ private:
 	float chargeTimer_ = 0.0f;
 	const float kChargeTime_ = 0.1f;
 
-	// 突進時間管理
-	float dashTimer_ = 0.0f;
-	const float kDashTime_ = 0.2f;
+	//// 突進時間管理
+	//float dashTimer_ = 0.0f;
+	//const float kDashTime_ = 0.2f;
 
 	// 後隙時間管理
 	float gapTimer_ = 0.0f;
-	const float kGapTime_ = 0.1f;
+	const float kGapTime_ = 0.2f;
 
 	// 現在の攻撃フェーズ
 	AttackPhase attackPhase_ = AttackPhase::kCharge;
 
-	// 空中で攻撃可能か
-	bool canAirAttack_ = true;
+	//// 空中で攻撃可能か
+	//bool canAirAttack_ = true;
 
 	// ノックバック方向
 	float knockBackDirection_ = 0.0f;
+
+	GameScene* gameScene_ = nullptr;
+
+	// 突進の使用権
+	bool canDash_ = true;
+
+	// 発動時に確定する方向
+	KamataEngine::Vector3 dashDirection_ = {1.0f, 0.0f, 0.0f};
+
+	// 残り移動距離
+	float dashRemainingDistance_ = 0.0f;
+
+	// 最終移動フレームも攻撃判定を有効にするためのフラグ
+	bool dashMovedThisFrame_ = false;
+
+	// 高速移動中の敵との判定に使う
+	KamataEngine::Vector3 dashFrameStart_ = {};
+
+	// 調整値。1マス＝2.0なので、12.0は6マス分
+	static constexpr float kDashRange = 12.0f;
+	static constexpr float kDashDistance = 12.0f;
+
+	bool TryStartDash();
 
 	/*--------------- ノックバック用 ---------------*/
 	// タイマー

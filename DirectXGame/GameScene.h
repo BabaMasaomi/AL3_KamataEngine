@@ -157,6 +157,12 @@ public:
 	// 描画
 	void Draw();
 
+	// 移動できる割合を返す。1なら全距離移動可能、0なら移動不可
+	float GetDashMoveRate(const KamataEngine::Vector3& start, const KamataEngine::Vector3& movement, float halfWidth, float halfHeight);
+
+	// 射程内で進路が開いている最も近い敵の座標を取得
+	bool FindDashTarget(const KamataEngine::Vector3& start, float range, float halfWidth, float halfHeight, KamataEngine::Vector3& targetPos);
+
 	// エフェクトの生成
 	void CreateHitEffect(KamataEngine::Vector3 pos, HitEffectType type);
 

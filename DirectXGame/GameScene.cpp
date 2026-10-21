@@ -1,8 +1,53 @@
-﻿#include "GameScene.h"
+﻿#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include "GameScene.h"
 #include <cmath>
 
 // KamataEngine::を毎回入力しなくてもいい様にする
 using namespace KamataEngine;
+
+namespace {
+
+// 線分と矩形の交差判定。
+// hitRateには、移動開始から衝突までの割合を入れる。
+bool SegmentHitsRect(const KamataEngine::Vector3& start, const KamataEngine::Vector3& movement, float left, float right, float bottom, float top, float& hitRate) {
+
+	float enter = 0.0f;
+	float exit = 1.0f;
+
+	auto checkAxis = [&](float position, float delta, float minimum, float maximum) {
+		if (std::abs(delta) < 0.000001f) {
+			return position >= minimum && position <= maximum;
+		}
+
+		float t1 = (minimum - position) / delta;
+		float t2 = (maximum - position) / delta;
+
+		if (t1 > t2) {
+			std::swap(t1, t2);
+		}
+
+		enter = std::max(enter, t1);
+		exit = std::min(exit, t2);
+
+		return enter <= exit;
+	};
+
+	if (!checkAxis(start.x, movement.x, left, right)) {
+		return false;
+	}
+
+	if (!checkAxis(start.y, movement.y, bottom, top)) {
+		return false;
+	}
+
+	hitRate = enter;
+	return true;
+}
+
+} // namespace
 
 /*-------------------- コンストラクタ&デストラクタ --------------------*/
 GameScene::GameScene() {}
@@ -93,7 +138,6 @@ void GameScene::Initialize() {
 
 	// マップからプレイヤーの開始位置を探す
 	for (uint32_t y = 0; y < MapChipField::kNumBlockVertical && !foundPlayer; ++y) {
-
 		for (uint32_t x = 0; x < MapChipField::kNumBlockHorizontal; ++x) {
 
 			if (mapChipField_->GetMapChipTypeByIndex(x, y) != MapChipType::kPlayer) {
@@ -109,6 +153,9 @@ void GameScene::Initialize() {
 
 	// プレイヤーの初期化
 	player_->Initialize(model_, modelAttack_, &camera_, playerPos);
+
+	// Player側でゲームシーンを取得
+	player_->SetGameScene(this);
 
 	// マップチップデータのセット
 	player_->SetMapChipField(mapChipField_);
@@ -608,6 +655,67 @@ void GameScene::Draw() {
 	fade_->Draw();
 
 	Model::PostDraw();
+}
+
+// 移動できる割合
+float GameScene::GetDashMoveRate(const Vector3& start, const Vector3& movement, float halfWidth, float halfHeight) {
+
+	float moveRate = 1.0f;
+
+	for (uint32_t y = 0; y < MapChipField::kNumBlockVertical; ++y) {
+		for (uint32_t x = 0; x < MapChipField::kNumBlockHorizontal; ++x) {
+			if (mapChipField_->GetMapChipTypeByIndex(x, y) != MapChipType::kBlock) {
+				continue;
+			}
+
+			const auto rect = mapChipField_->GetRectByIndex(x, y);
+			float hitRate = 1.0f;
+
+			if (SegmentHitsRect(start, movement, rect.left - halfWidth, rect.right + halfWidth, rect.bottom - halfHeight, rect.top + halfHeight, hitRate)) {
+				moveRate = std::min(moveRate, hitRate);
+			}
+		}
+	}
+
+	return moveRate;
+}
+
+// 射程内で進路が開いている最も近い敵の座標を取得
+bool GameScene::FindDashTarget(const Vector3& start, float range, float halfWidth, float halfHeight, Vector3& targetPos) {
+
+	float nearestDistanceSq = range * range;
+	bool found = false;
+
+	for (Enemy* enemy : enemies_) {
+		if (enemy->GetIsDead() || enemy->IsCollisionDisEnabled()) {
+			continue;
+		}
+
+		const Vector3 enemyPos = enemy->GetWorldPos();
+
+		const Vector3 difference = {
+		    enemyPos.x - start.x,
+		    enemyPos.y - start.y,
+		    0.0f,
+		};
+
+		const float distanceSq = difference.x * difference.x + difference.y * difference.y;
+
+		if (distanceSq > nearestDistanceSq) {
+			continue;
+		}
+
+		// 敵まで体ごと通れるか調べる
+		if (GetDashMoveRate(start, difference, halfWidth, halfHeight) < 1.0f) {
+			continue;
+		}
+
+		nearestDistanceSq = distanceSq;
+		targetPos = enemyPos;
+		found = true;
+	}
+
+	return found;
 }
 
 /*-------------------- エフェクトの生成 --------------------*/
