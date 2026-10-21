@@ -119,7 +119,28 @@ private:
 	KamataEngine::Model* guardEffectModel_ = nullptr;
 
 	// ヒットエフェクトのリスト
-	std::list<HitEffect*> hitEffects_ = {};	
+	std::list<HitEffect*> hitEffects_ = {};
+
+	/*--------------- ロックマーク ---------------*/
+	KamataEngine::Model* modelLockMark_ = nullptr;
+	KamataEngine::WorldTransform worldTransformLockMark_;
+
+	// 借りている対象。ここからdeleteしない
+	Enemy* lockTarget_ = nullptr;
+
+	bool isLockMarkVisible_ = false;
+	float lockMarkTimer_ = 0.0f;
+
+	// ringは元の幅・高さが2.0
+	static constexpr float kLockStartScale = 2.5f;
+	static constexpr float kLockEndScale = 1.1f;
+	static constexpr float kLockShrinkTime = 0.18f;
+
+	// 敵よりカメラ側に表示
+	static constexpr float kLockFrontOffset = 1.2f;
+
+	void UpdateLockMark();
+	void ClearLockMark();
 
 	/*-------------------- 追従カメラ --------------------*/
 	// カメラ
@@ -161,8 +182,8 @@ public:
 	float GetDashMoveRate(const KamataEngine::Vector3& start, const KamataEngine::Vector3& movement, float halfWidth, float halfHeight);
 
 	// 射程内で進路が開いている最も近い敵の座標を取得
-	bool FindDashTarget(const KamataEngine::Vector3& start, float range, float halfWidth, float halfHeight, KamataEngine::Vector3& targetPos);
-
+	bool FindDashTarget(const KamataEngine::Vector3& start, float range, float halfWidth, float halfHeight, KamataEngine::Vector3& targetPos, Enemy** targetEnemy = nullptr);
+	
 	// エフェクトの生成
 	void CreateHitEffect(KamataEngine::Vector3 pos, HitEffectType type);
 

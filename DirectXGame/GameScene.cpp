@@ -4,6 +4,7 @@
 
 #include "GameScene.h"
 #include <cmath>
+#include <algorithm>
 
 // KamataEngine::を毎回入力しなくてもいい様にする
 using namespace KamataEngine;
@@ -289,6 +290,14 @@ void GameScene::Initialize() {
 	HitEffect::SetGuardModel(guardEffectModel_);
 	HitEffect::SetCamera(&camera_);
 
+	/*--------------- ロックマーク ---------------*/
+	modelLockMark_ = Model::CreateFromOBJ("ring", true);
+
+	worldTransformLockMark_.Initialize();
+	worldTransformLockMark_.rotation_ = {0.0f, 0.0f, 0.0f};
+
+	ClearLockMark();
+
 	/*--------------- カメラ ---------------*/
 	// カメラコントローラの生成
 	camaraController_ = new CameraController();
@@ -410,6 +419,7 @@ void GameScene::Update() {
 		// プレイシーンのリセット
 		// リトライ要求
 		if (Input::GetInstance()->TriggerKey(DIK_R)) {
+			ClearLockMark();
 			retryRequested_ = true;
 			return;
 		}
@@ -426,11 +436,16 @@ void GameScene::Update() {
 		}
 
 		// デスフラグの立った敵を削除
-		enemies_.remove_if([](Enemy* enemy) {
+		enemies_.remove_if([this](Enemy* enemy) {
 			if (enemy->GetIsDead()) {
+				if (lockTarget_ == enemy) {
+					ClearLockMark();
+				}
+
 				delete enemy;
 				return true;
 			}
+
 			return false;
 		});
 
@@ -589,6 +604,9 @@ void GameScene::Update() {
 	// フェーズの切り替え処理
 	ChangePhase();
 
+	// 敵の移動・削除・衝突・シーン状態の変更を反映してから更新
+	UpdateLockMark();
+
 #ifdef _DEBUG
 	// デバッグ起動
 	if (Input::GetInstance()->TriggerKey(DIK_SPACE)) {
@@ -651,6 +669,11 @@ void GameScene::Draw() {
 	// プレイヤーの描画
 	player_->Draw();
 
+	// ロックマーク
+	if (isLockMarkVisible_ && modelLockMark_) {
+		modelLockMark_->Draw(worldTransformLockMark_, camera_);
+	}
+
 	// フェードを更新
 	fade_->Draw();
 
@@ -681,7 +704,11 @@ float GameScene::GetDashMoveRate(const Vector3& start, const Vector3& movement, 
 }
 
 // 射程内で進路が開いている最も近い敵の座標を取得
-bool GameScene::FindDashTarget(const Vector3& start, float range, float halfWidth, float halfHeight, Vector3& targetPos) {
+bool GameScene::FindDashTarget(const Vector3& start, float range, float halfWidth, float halfHeight, Vector3& targetPos, Enemy** targetEnemy) {
+
+	if (targetEnemy) {
+		*targetEnemy = nullptr;
+	}
 
 	float nearestDistanceSq = range * range;
 	bool found = false;
@@ -713,9 +740,72 @@ bool GameScene::FindDashTarget(const Vector3& start, float range, float halfWidt
 		nearestDistanceSq = distanceSq;
 		targetPos = enemyPos;
 		found = true;
+
+		if (targetEnemy) {
+			*targetEnemy = enemy;
+		}
 	}
 
 	return found;
+}
+
+void GameScene::UpdateLockMark() {
+	// プレイ中かつ、攻撃を開始できる場合だけ表示
+	if (phase_ != Phase::kPlay || !player_ || !player_->CanStartDash()) {
+
+		ClearLockMark();
+		return;
+	}
+
+	const AABB playerAABB = player_->GetAABB();
+
+	const float halfWidth = (playerAABB.max.x - playerAABB.min.x) / 2.0f;
+	const float halfHeight = (playerAABB.max.y - playerAABB.min.y) / 2.0f;
+
+	Vector3 targetPos = {};
+	Enemy* nextTarget = nullptr;
+
+	// 突進と同じ条件で対象を検索
+	if (!FindDashTarget(player_->GetWorldPos(), player_->GetDashRange(), halfWidth, halfHeight, targetPos, &nextTarget)) {
+
+		ClearLockMark();
+		return;
+	}
+
+	if (nextTarget != lockTarget_) {
+		// 古い対象の表示を引き継がず、新しい対象で開始
+		lockTarget_ = nextTarget;
+		lockMarkTimer_ = 0.0f;
+	} else {
+		// 同じ対象なら演出を継続
+		lockMarkTimer_ = std::min(lockMarkTimer_ + 1.0f / 60.0f, kLockShrinkTime);
+	}
+
+	isLockMarkVisible_ = true;
+
+	const float t = std::clamp(lockMarkTimer_ / kLockShrinkTime, 0.0f, 1.0f);
+
+	// 最初は速く縮み、最後はゆっくり止まる
+	const float easedT = 1.0f - (1.0f - t) * (1.0f - t);
+	const float scale = kLockStartScale + (kLockEndScale - kLockStartScale) * easedT;
+
+	worldTransformLockMark_.scale_ = {
+	    scale,
+	    scale,
+	    1.0f,
+	};
+
+	// 毎フレーム、対象の現在位置へ追従
+	worldTransformLockMark_.translation_ = targetPos;
+	worldTransformLockMark_.translation_.z -= kLockFrontOffset;
+
+	transform_.worldMatrixUpdate(worldTransformLockMark_);
+}
+
+void GameScene::ClearLockMark() {
+	lockTarget_ = nullptr;
+	isLockMarkVisible_ = false;
+	lockMarkTimer_ = 0.0f;
 }
 
 /*-------------------- エフェクトの生成 --------------------*/

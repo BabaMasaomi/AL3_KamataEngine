@@ -307,11 +307,16 @@ void Player::BehaviorAttackInitialize() {
 	turnTimer_ = 0.0f;
 	isAttackEffect_ = false;
 
-	// 現在のモデルは通常時にYを90度回すと右を向く。
-	// その状態からZ回転で進行方向へ向ける。
+	// 左右の向きはY回転、上下への傾きはZ回転で表す
+	const bool facingRight = lrDirection_ == LRDirection::kRight;
+
 	worldTransform_.rotation_.x = 0.0f;
-	worldTransform_.rotation_.y = std::numbers::pi_v<float> / 2.0f;
-	worldTransform_.rotation_.z = std::atan2(dashDirection_.y, dashDirection_.x);
+	worldTransform_.rotation_.y = facingRight ? std::numbers::pi_v<float> / 2.0f : std::numbers::pi_v<float> * 3.0f / 2.0f;
+
+	// 左向きでは、傾ける方向も反転する
+	const float facingSign = facingRight ? 1.0f : -1.0f;
+
+	worldTransform_.rotation_.z = std::atan2(dashDirection_.y * facingSign, dashDirection_.x * facingSign);
 }
 
 /// <summary>
@@ -878,9 +883,9 @@ bool Player::IsAttack() {
 bool Player::CanAttackEnemy() const { return dashMovedThisFrame_; }
 
 // ダメージを受けるか
-bool Player::CanReceiveDamage() const {
-	// 攻撃中じゃない
-	return CanAttackEnemy();
+bool Player::CanReceiveDamage() const { 
+	// 攻撃中じゃなければ
+	return !isDead_ && behaivior_ != Behavior::kAttack;
 }
 
 // ノックバック要求を受け取る

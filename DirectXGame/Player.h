@@ -188,6 +188,13 @@ public:
 	// 敵を倒したときに呼ぶ
 	void RestoreDash() { canDash_ = true; }
 
+	// 使用権があり、通常状態で次の攻撃を開始できるか
+	bool CanStartDash() const { return canDash_ && !isDead_ && behaivior_ == Behavior::kRoot && behaiviorRequest_ == Behavior::kUnKnown; }
+
+	// 攻撃射程を取得
+	float GetDashRange() const { return kDashRange; }
+
+	// ダッシュ攻撃が発動可能か
 	bool GetCanDash() const { return canDash_; }
 
 	// 今フレームの突進経路
