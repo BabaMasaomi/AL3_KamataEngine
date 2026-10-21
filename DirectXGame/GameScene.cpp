@@ -741,12 +741,15 @@ void GameScene::ChangePhase() {
 	case GameScene::Phase::kPlay:
 		// ゲームプレイフェーズの処理
 
+		// 敵を全て倒し、
 		// 生存中のプレイヤーがゴールマスに触れたらクリア
-		if (hasGoal_ && !player_->GetIsDead() && CheckAABBCollision(player_->GetAABB(), goalAABB_)) {
+		if (enemies_.empty()) {
+			if (hasGoal_ && !player_->GetIsDead() && CheckAABBCollision(player_->GetAABB(), goalAABB_)) {
 
-			isClear_ = true;
-			phase_ = GameScene::Phase::kClear;
-			break;
+				isClear_ = true;
+				phase_ = GameScene::Phase::kClear;
+				break;
+			}
 		}
 
 		// 死亡時

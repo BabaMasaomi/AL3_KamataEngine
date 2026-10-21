@@ -38,6 +38,9 @@ public:
 	/// </summary>
 	void Reset();
 
+	// 画面揺れを開始
+	void StartShake(float duration, float power);
+
 	// セッター
 	// 追従対象の位置
 	void SetTarget(Player* target) { target_ = target; }
@@ -62,17 +65,24 @@ private:
 	KamataEngine::Vector3 targetCoordinate = {};
 
 	// 座標補間割合
-	static inline const float kInterpolationRate = 0.2f;
+	static inline const float kInterpolationRate = 0.08f;
 
 	// 速度掛け率
-	// 横方向
-	static inline const float kVelocityBiasX = 7.5f;
+	// 横方向の速度先読み倍率
+	static constexpr float kVelocityBiasX = 2.0f;
 
-	// 縦方向
-	static inline const float kVelocityBiasY = 0.5f;
+	// 縦方向の速度先読み倍率
+	static constexpr float kVelocityBiasY = 0.5f;
 
 	// 追従対象の各方向へのカメラ移動範囲(-left,+right,-bottom,+topの順)
 	static inline const Rect cameraMovementMargin = {-100.0f, 100.0f, -100.0f, 100.0f};
+
+	// 画面揺れ
+	float shakeTimer_ = 0.0f;
+	float shakeDuration_ = 0.0f;
+	float shakePower_ = 0.0f;
+
+	KamataEngine::Vector3 shakeOffset_ = {};
 
 	/*--------------- モード管理 ---------------*/
 	Mode mode_ = Mode::kFollow;
