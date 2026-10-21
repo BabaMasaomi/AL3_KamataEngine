@@ -185,23 +185,16 @@ public:
 	// ゲームシーン取得
 	void SetGameScene(GameScene* gameScene) { gameScene_ = gameScene; }
 
-	// 敵を倒したときに呼ぶ
-	void RestoreDash() { canDash_ = true; }
-
 	// 攻撃成功時の使用権回復
 	void OnAttackSucceeded() {
-		RestoreDash();
 		canAirJump_ = true;
 	}
 
 	// 使用権があり、通常状態で次の攻撃を開始できるか
-	bool CanStartDash() const { return canDash_ && !isDead_ && behaivior_ == Behavior::kRoot && behaiviorRequest_ == Behavior::kUnKnown; }
+	bool CanStartDash() const { return  !isDead_ && behaivior_ == Behavior::kRoot && behaiviorRequest_ == Behavior::kUnKnown; }
 
 	// 攻撃射程を取得
 	float GetDashRange() const { return kDashRange; }
-
-	// ダッシュ攻撃が発動可能か
-	bool GetCanDash() const { return canDash_; }
 
 	// 今フレームの突進経路
 	const KamataEngine::Vector3& GetDashFrameStart() const { return dashFrameStart_; }
@@ -277,41 +270,29 @@ private:
 	// 旋回タイマー
 	float turnTimer_ = 0.0f;
 
-	// 旋回時間(秒)
+	// 移動時の旋回時間(秒)
 	static inline const float kTimeTurn = 0.2f;
 
 	/*--------------- 攻撃行動用 ---------------*/
-	//// 突進開始位置
-	//float dashStartX_ = 0.0f;
 
 	// 突進速度
 	const float kDashSpeed = 1.2f;
 
 	// 溜め時間管理
 	float chargeTimer_ = 0.0f;
-	const float kChargeTime_ = 0.3f;
-
-	//// 突進時間管理
-	//float dashTimer_ = 0.0f;
-	//const float kDashTime_ = 0.2f;
+	const float kChargeTime_ = 0.2f;
 
 	// 後隙時間管理
 	float gapTimer_ = 0.0f;
-	const float kGapTime_ = 0.3f;
+	const float kGapTime_ = 0.2f;
 
 	// 現在の攻撃フェーズ
 	AttackPhase attackPhase_ = AttackPhase::kCharge;
-
-	//// 空中で攻撃可能か
-	//bool canAirAttack_ = true;
 
 	// ノックバック方向
 	float knockBackDirection_ = 0.0f;
 
 	GameScene* gameScene_ = nullptr;
-
-	// 突進の使用権
-	bool canDash_ = true;
 
 	// 発動時に確定する方向
 	KamataEngine::Vector3 dashDirection_ = {1.0f, 0.0f, 0.0f};
@@ -337,11 +318,25 @@ private:
 	KamataEngine::Vector3 attackRotationFrom_ = {};
 	KamataEngine::Vector3 attackRotationTo_ = {};
 
+	// 攻撃時の回転を更新
 	void UpdateAttackRotation(float elapsed, float duration);
 
 	// 攻撃終了後の落下猶予
 	float fallDelayTimer_ = 0.0f;
-	static constexpr float kFallDelayTime = 0.15f;	
+	static constexpr float kFallDelayTime = 0.15f;
+
+	// 攻撃時のスケール
+	const KamataEngine::Vector3 normalScale_ = {2.0f, 2.0f, 2.0f};
+	const KamataEngine::Vector3 chargeScale_ = {2.0f, 2.3f, 1.2f};
+	const KamataEngine::Vector3 dashScale_ = {2.0f, 1.2f, 3.2f};
+
+	// 補間開始時のスケール
+	KamataEngine::Vector3 attackScaleFrom_ = {2.0f, 2.0f, 2.0f};
+
+	// 後隙で通常スケールへ戻す時間
+	static constexpr float kScaleReturnTime = 0.08f;
+
+	void UpdateAttackScale(const KamataEngine::Vector3& target, float elapsed, float duration);
 
 	/*--------------- ノックバック用 ---------------*/
 	// タイマー

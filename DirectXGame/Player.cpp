@@ -34,7 +34,7 @@ void Player::Initialize(Model* model, Model* modelAttack, Camera* camera, const 
 
 	// メンバ変数への代入処理
 	// プレイヤーの拡縮,回転,平行移動情報
-	worldTransform_.scale_ = {2, 2, 2};
+	worldTransform_.scale_ = normalScale_;
 	worldTransform_.translation_ = pos;
 	worldTransform_.rotation_.y = std::numbers::pi_v<float> / 2.0f;
 
@@ -45,12 +45,12 @@ void Player::Initialize(Model* model, Model* modelAttack, Camera* camera, const 
 	modelAttack_ = modelAttack;
 
 	// 攻撃機能の変数
-	canDash_ = true;
 	dashMovedThisFrame_ = false;
 	dashRemainingDistance_ = 0.0f;
 
+	// 空中ジャンプできるか
 	canAirJump_ = false;
-
+	// 重力落下開始までの猶予
 	fallDelayTimer_ = 0.0f;
 }
 
@@ -343,6 +343,9 @@ void Player::BehaviorAttackInitialize() {
 	    facingRight ? std::numbers::pi_v<float> / 2.0f : std::numbers::pi_v<float> * 3.0f / 2.0f,
 	    std::atan2(dashDirection_.y * facingSign, dashDirection_.x * facingSign),
 	};
+
+	// 現在のスケールからチャージ形状へ変化させる
+	attackScaleFrom_ = worldTransform_.scale_;
 }
 
 /// <summary>
@@ -360,9 +363,15 @@ void Player::BehaviorAttackUpdate() {
 
 		UpdateAttackRotation(chargeTimer_, kChargeTime_);
 
+		// 溜めに合わせて進行方向を押し縮める
+		UpdateAttackScale(chargeScale_, chargeTimer_, kChargeTime_);
+
 		if (chargeTimer_ >= kChargeTime_) {
 			attackPhase_ = AttackPhase::kDash;
 			isAttackEffect_ = true;
+
+			// 突進開始で一気に伸ばす
+			worldTransform_.scale_ = dashScale_;
 		}
 		break;
 
@@ -401,6 +410,9 @@ void Player::BehaviorAttackUpdate() {
 			gapTimer_ = 0.0f;
 			isAttackEffect_ = false;
 
+			// 伸びた状態から通常スケールへ戻す
+			attackScaleFrom_ = worldTransform_.scale_;
+
 			// 現在の攻撃姿勢から通常姿勢へ戻す
 			attackRotationFrom_ = worldTransform_.rotation_;
 			attackRotationTo_ = {
@@ -416,6 +428,8 @@ void Player::BehaviorAttackUpdate() {
 		gapTimer_ += deltaTime;
 
 		UpdateAttackRotation(gapTimer_, kGapTime_);
+		// 後隙全体より短い時間でスケールを戻す
+		UpdateAttackScale(normalScale_, gapTimer_, kScaleReturnTime);
 
 		if (gapTimer_ >= kGapTime_) {
 			EndAttack();
@@ -431,7 +445,7 @@ void Player::BehaviorAttackUpdate() {
 }
 
 bool Player::TryStartDash() {
-	if (!canDash_ || isDead_ || !gameScene_) {
+	if ( isDead_ || !gameScene_) {
 		return false;
 	}
 
@@ -499,7 +513,6 @@ bool Player::TryStartDash() {
 		lrDirection_ = LRDirection::kLeft;
 	}
 
-	canDash_ = false;
 	velocity_ = {};
 
 	behaiviorRequest_ = Behavior::kAttack;
@@ -529,6 +542,19 @@ void Player::UpdateAttackRotation(float elapsed, float duration) {
 	    interpolateAngle(attackRotationFrom_.x, attackRotationTo_.x),
 	    interpolateAngle(attackRotationFrom_.y, attackRotationTo_.y),
 	    interpolateAngle(attackRotationFrom_.z, attackRotationTo_.z),
+	};
+}
+
+void Player::UpdateAttackScale(const Vector3& target, float elapsed, float duration) {
+	const float t = duration > 0.0f ? std::clamp(elapsed / duration, 0.0f, 1.0f) : 1.0f;
+
+	// 始まりと終わりを滑らかにする
+	const float easeT = t * t * (3.0f - 2.0f * t);
+
+	worldTransform_.scale_ = {
+	    attackScaleFrom_.x + (target.x - attackScaleFrom_.x) * easeT,
+	    attackScaleFrom_.y + (target.y - attackScaleFrom_.y) * easeT,
+	    attackScaleFrom_.z + (target.z - attackScaleFrom_.z) * easeT,
 	};
 }
 
@@ -1004,7 +1030,7 @@ void Player::EndAttack() {
 	// エフェクトを消す
 	isAttackEffect_ = false;
 	// スケールを元に戻す
-	worldTransform_.scale_ = {2.0f, 2.0f, 2.0f};
+	worldTransform_.scale_ = normalScale_;
 	// 攻撃フェーズをリセット
 	attackPhase_ = AttackPhase::kNone;
 	// タイマーをリセット
