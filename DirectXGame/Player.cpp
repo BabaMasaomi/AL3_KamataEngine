@@ -1,10 +1,12 @@
 ﻿#define NOMINMAX
 #include "Player.h"
-#include "MapChipField.h"
+#include "Enemy.h"
 #include "GameScene.h"
-#include <cmath>
+#include "MapChipField.h"
 #include <algorithm>
 #include <cassert>
+#include <cmath>
+#include <limits>
 #include <numbers>
 
 // コンストラクタ&デストラクタ
@@ -42,17 +44,21 @@ void Player::Initialize(Model* model, Model* modelAttack, Camera* camera, const 
 	model_ = model;
 	modelAttack_ = modelAttack;
 
-	// 攻撃機能の変数	
+	// 攻撃機能の変数
 	canDash_ = true;
 	dashMovedThisFrame_ = false;
 	dashRemainingDistance_ = 0.0f;
+
+	canAirJump_ = false;
+
+	fallDelayTimer_ = 0.0f;
 }
 
 /// <summary>
 /// 自機の更新
 /// </summary>
 void Player::Update() {
-	// 
+	//
 	dashMovedThisFrame_ = false;
 
 	// 振る舞いを変更する
@@ -250,20 +256,34 @@ void Player::BehaviorRootUpdate() {
 		velocity_.x *= (1.0f - kAttenuation);
 	}
 
-	// 接地している時
-	if (onGround_) { // 地上
+	// 地上、または攻撃成功で空中ジャンプ権を持っていればジャンプできる
+	const bool jumpRequested = Input::GetInstance()->TriggerKey(DIK_UP);
 
-		// ジャンプ入力
-		if (Input::GetInstance()->TriggerKey(DIK_UP)) {
-			// ジャンプ初速
-			velocity_.y += kJumpAcceleration_;
-		}
+	if (jumpRequested && (onGround_ || canAirJump_)) {
+		// 落下中でも同じ高さへ跳べるように、加算ではなく代入
+		velocity_.y = kJumpAcceleration_;
 
-	} else { // 空中
-		// 落下速度
+		onGround_ = false;
+
+		// 1回使ったら消費
+		canAirJump_ = false;
+
+		// ジャンプしたら通常の重力へ戻す
+		fallDelayTimer_ = 0.0f;
+
+	} else if (onGround_) {
+		// 地上では猶予は不要
+		fallDelayTimer_ = 0.0f;
+
+	} else if (fallDelayTimer_ > 0.0f) {
+		// 猶予中は高さを維持する
+		fallDelayTimer_ = std::max(0.0f, fallDelayTimer_ - 1.0f / 60.0f);
+
+		velocity_.y = 0.0f;
+
+	} else {
+		// 通常の重力
 		velocity_.y -= kGravityAcceleration;
-
-		// 落下速度制限
 		velocity_.y = std::max(velocity_.y, -kLimitFallSpeed_);
 	}
 
@@ -299,7 +319,6 @@ void Player::BehaviorAttackInitialize() {
 	chargeTimer_ = 0.0f;
 	gapTimer_ = 0.0f;
 
-	dashRemainingDistance_ = kDashDistance;
 	attackPhase_ = AttackPhase::kCharge;
 
 	velocity_ = {};
@@ -307,16 +326,23 @@ void Player::BehaviorAttackInitialize() {
 	turnTimer_ = 0.0f;
 	isAttackEffect_ = false;
 
+	// 前回の落下猶予を終了
+	fallDelayTimer_ = 0.0f;
+
+	// 現在の姿勢から補間を始める
+	attackRotationFrom_ = worldTransform_.rotation_;
+
 	// 左右の向きはY回転、上下への傾きはZ回転で表す
 	const bool facingRight = lrDirection_ == LRDirection::kRight;
-
-	worldTransform_.rotation_.x = 0.0f;
-	worldTransform_.rotation_.y = facingRight ? std::numbers::pi_v<float> / 2.0f : std::numbers::pi_v<float> * 3.0f / 2.0f;
-
 	// 左向きでは、傾ける方向も反転する
 	const float facingSign = facingRight ? 1.0f : -1.0f;
 
-	worldTransform_.rotation_.z = std::atan2(dashDirection_.y * facingSign, dashDirection_.x * facingSign);
+	// 攻撃中に向く姿勢
+	attackRotationTo_ = {
+	    0.0f,
+	    facingRight ? std::numbers::pi_v<float> / 2.0f : std::numbers::pi_v<float> * 3.0f / 2.0f,
+	    std::atan2(dashDirection_.y * facingSign, dashDirection_.x * facingSign),
+	};
 }
 
 /// <summary>
@@ -331,6 +357,8 @@ void Player::BehaviorAttackUpdate() {
 	switch (attackPhase_) {
 	case AttackPhase::kCharge:
 		chargeTimer_ += deltaTime;
+
+		UpdateAttackRotation(chargeTimer_, kChargeTime_);
 
 		if (chargeTimer_ >= kChargeTime_) {
 			attackPhase_ = AttackPhase::kDash;
@@ -353,9 +381,9 @@ void Player::BehaviorAttackUpdate() {
 
 		// 突進経路全体でブロックとの衝突を確認
 		const float moveRate = gameScene_->GetDashMoveRate(dashFrameStart_, movement, kWidth / 2.0f, kHeight / 2.0f);
-
+		// 壁にぶつかっていないか
 		const bool hitWall = moveRate < 1.0f;
-
+		// 実際の突進攻撃の移動距離
 		float actualDistance = step;
 
 		if (hitWall) {
@@ -372,6 +400,14 @@ void Player::BehaviorAttackUpdate() {
 			attackPhase_ = AttackPhase::kGap;
 			gapTimer_ = 0.0f;
 			isAttackEffect_ = false;
+
+			// 現在の攻撃姿勢から通常姿勢へ戻す
+			attackRotationFrom_ = worldTransform_.rotation_;
+			attackRotationTo_ = {
+			    0.0f,
+			    lrDirection_ == LRDirection::kRight ? std::numbers::pi_v<float> / 2.0f : std::numbers::pi_v<float> * 3.0f / 2.0f,
+			    0.0f,
+			};
 		}
 		break;
 	}
@@ -379,8 +415,12 @@ void Player::BehaviorAttackUpdate() {
 	case AttackPhase::kGap:
 		gapTimer_ += deltaTime;
 
+		UpdateAttackRotation(gapTimer_, kGapTime_);
+
 		if (gapTimer_ >= kGapTime_) {
 			EndAttack();
+			// 通常操作へ戻ってから使う落下猶予
+			fallDelayTimer_ = kFallDelayTime;
 			behaiviorRequest_ = Behavior::kRoot;
 		}
 		break;
@@ -397,8 +437,14 @@ bool Player::TryStartDash() {
 
 	const Vector3 start = GetWorldPos();
 	Vector3 targetPos = {};
+	Enemy* targetEnemy = nullptr;
 
-	if (!gameScene_->FindDashTarget(start, kDashRange, kWidth / 2.0f, kHeight / 2.0f, targetPos)) {
+	// 位置に加えて、対象の敵も取得する
+	if (!gameScene_->FindDashTarget(start, kDashRange, kWidth / 2.0f, kHeight / 2.0f, targetPos, &targetEnemy)) {
+		return false;
+	}
+
+	if (!targetEnemy) {
 		return false;
 	}
 
@@ -409,7 +455,7 @@ bool Player::TryStartDash() {
 	if (length > 0.0001f) {
 		dashDirection_ = {dx / length, dy / length, 0.0f};
 	} else {
-		// 中心がほぼ同じ場合は現在の左右方向へ
+		// 中心がほぼ同じ場合は現在の左右方向へ抜ける
 		dashDirection_ = {
 		    lrDirection_ == LRDirection::kRight ? 1.0f : -1.0f,
 		    0.0f,
@@ -417,20 +463,73 @@ bool Player::TryStartDash() {
 		};
 	}
 
+	// 敵の当たり判定の半サイズ
+	const AABB targetAABB = targetEnemy->GetAABB();
+
+	const float enemyHalfWidth = (targetAABB.max.x - targetAABB.min.x) / 2.0f;
+	const float enemyHalfHeight = (targetAABB.max.y - targetAABB.min.y) / 2.0f;
+
+	// 敵の中心から、体同士が重ならなくなるまでの距離を求める
+	const float separateX = enemyHalfWidth + kWidth / 2.0f;
+	const float separateY = enemyHalfHeight + kHeight / 2.0f;
+
+	const float absDirX = std::abs(dashDirection_.x);
+	const float absDirY = std::abs(dashDirection_.y);
+
+	float exitDistanceX = std::numeric_limits<float>::max();
+	float exitDistanceY = std::numeric_limits<float>::max();
+
+	//
+	if (absDirX > 0.0001f) {
+		exitDistanceX = separateX / absDirX;
+	}
+	if (absDirY > 0.0001f) {
+		exitDistanceY = separateY / absDirY;
+	}
+
+	// XかYのどちらかが離れれば、AABB同士は重ならなくなる
+	const float passDistance = std::min(exitDistanceX, exitDistanceY) + kDashStopMargin;
+
+	// 開始位置から敵まで ＋ 敵の反対側へ抜ける距離
+	dashRemainingDistance_ = length + passDistance;
+
 	if (dashDirection_.x > 0.0001f) {
 		lrDirection_ = LRDirection::kRight;
 	} else if (dashDirection_.x < -0.0001f) {
 		lrDirection_ = LRDirection::kLeft;
 	}
 
-	// 対象が見つかった場合だけ消費
 	canDash_ = false;
-
-	// 溜め中に開始位置がずれないようにする
 	velocity_ = {};
 
 	behaiviorRequest_ = Behavior::kAttack;
 	return true;
+}
+
+void Player::UpdateAttackRotation(float elapsed, float duration) {
+	const float t = duration > 0.0f ? std::clamp(elapsed / duration, 0.0f, 1.0f) : 1.0f;
+
+	// 開始と終了を滑らかにする
+	const float easeT = t * t * (3.0f - 2.0f * t);
+
+	// 終了時は目的の角度に揃える
+	if (t >= 1.0f) {
+		worldTransform_.rotation_ = attackRotationTo_;
+		return;
+	}
+
+	// ±πの範囲に収め、短い方向へ回転する
+	const auto interpolateAngle = [easeT](float from, float to) {
+		const float difference = std::remainder(to - from, 2.0f * std::numbers::pi_v<float>);
+
+		return from + difference * easeT;
+	};
+
+	worldTransform_.rotation_ = {
+	    interpolateAngle(attackRotationFrom_.x, attackRotationTo_.x),
+	    interpolateAngle(attackRotationFrom_.y, attackRotationTo_.y),
+	    interpolateAngle(attackRotationFrom_.z, attackRotationTo_.z),
+	};
 }
 
 /// <summary>
@@ -813,11 +912,17 @@ void Player::SwitchGroundingState(const CollisionMapInfo& info) {
 			// 着地状態に切り替える
 			onGround_ = true;
 
+			// 空中ジャンプ権を次のジャンプへ持ち越さない
+			canAirJump_ = false;
+
 			// 着地時にX方向速度を減衰させる
 			velocity_.x *= (1.0f - kAttenuationLanding);
 
 			// Y方向速度を0にする
 			velocity_.y = 0.0f;
+
+			// 落下猶予タイマーをリセット
+			fallDelayTimer_ = 0.0f;
 		}
 	}
 }
@@ -883,7 +988,7 @@ bool Player::IsAttack() {
 bool Player::CanAttackEnemy() const { return dashMovedThisFrame_; }
 
 // ダメージを受けるか
-bool Player::CanReceiveDamage() const { 
+bool Player::CanReceiveDamage() const {
 	// 攻撃中じゃなければ
 	return !isDead_ && behaivior_ != Behavior::kAttack;
 }

@@ -172,7 +172,7 @@ void Enemy::OnCollisionPlayer(Player* player) {
 	isCollisionDisenabled_ = true;
 
 	// 死亡演出の終了を待たずに回復
-	player->RestoreDash();
+	player->OnAttackSucceeded();
 
 	// 敵と自キャラの中間にエフェクトを生成
 	Vector3 effectPos = Vector3(

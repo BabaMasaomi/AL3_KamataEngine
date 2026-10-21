@@ -188,6 +188,12 @@ public:
 	// 敵を倒したときに呼ぶ
 	void RestoreDash() { canDash_ = true; }
 
+	// 攻撃成功時の使用権回復
+	void OnAttackSucceeded() {
+		RestoreDash();
+		canAirJump_ = true;
+	}
+
 	// 使用権があり、通常状態で次の攻撃を開始できるか
 	bool CanStartDash() const { return canDash_ && !isDead_ && behaivior_ == Behavior::kRoot && behaiviorRequest_ == Behavior::kUnKnown; }
 
@@ -240,8 +246,11 @@ private:
 	// 接地フラグ
 	bool onGround_ = true;
 
+	// 攻撃成功で得られる空中ジャンプ権
+	bool canAirJump_ = false;
+
 	// 重力加速度
-	static inline const float kGravityAcceleration = 0.09f;
+	static inline const float kGravityAcceleration = 0.06f;
 
 	// 最大落下速度
 	static inline const float kLimitFallSpeed_ = 0.75f;
@@ -280,7 +289,7 @@ private:
 
 	// 溜め時間管理
 	float chargeTimer_ = 0.0f;
-	const float kChargeTime_ = 0.1f;
+	const float kChargeTime_ = 0.3f;
 
 	//// 突進時間管理
 	//float dashTimer_ = 0.0f;
@@ -288,7 +297,7 @@ private:
 
 	// 後隙時間管理
 	float gapTimer_ = 0.0f;
-	const float kGapTime_ = 0.2f;
+	const float kGapTime_ = 0.3f;
 
 	// 現在の攻撃フェーズ
 	AttackPhase attackPhase_ = AttackPhase::kCharge;
@@ -318,9 +327,21 @@ private:
 
 	// 調整値。1マス＝2.0なので、12.0は6マス分
 	static constexpr float kDashRange = 12.0f;
-	static constexpr float kDashDistance = 12.0f;
+	// 敵を通り抜けた後に空ける間隔
+	static constexpr float kDashStopMargin = 0.4f;
 
+	// 突進攻撃を試みる
 	bool TryStartDash();
+
+	// 攻撃前後の回転補間
+	KamataEngine::Vector3 attackRotationFrom_ = {};
+	KamataEngine::Vector3 attackRotationTo_ = {};
+
+	void UpdateAttackRotation(float elapsed, float duration);
+
+	// 攻撃終了後の落下猶予
+	float fallDelayTimer_ = 0.0f;
+	static constexpr float kFallDelayTime = 0.15f;	
 
 	/*--------------- ノックバック用 ---------------*/
 	// タイマー
