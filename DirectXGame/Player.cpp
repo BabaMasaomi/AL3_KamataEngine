@@ -515,6 +515,9 @@ bool Player::TryStartDash() {
 
 	velocity_ = {};
 
+	// 今回の攻撃対象をロックマークにも確定させる
+	gameScene_->SetDashLockTarget(targetEnemy);
+
 	behaiviorRequest_ = Behavior::kAttack;
 	return true;
 }

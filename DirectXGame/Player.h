@@ -199,6 +199,20 @@ public:
 	// 今フレームの突進経路
 	const KamataEngine::Vector3& GetDashFrameStart() const { return dashFrameStart_; }
 
+	// チャージ中・突進中はロック表示を維持する
+	bool ShouldKeepDashLock() const {
+		if (isDead_) {
+			return false;
+		}
+
+		// 攻撃を予約したフレームも含める
+		if (behaiviorRequest_ == Behavior::kAttack) {
+			return true;
+		}
+
+		return behaivior_ == Behavior::kAttack && (attackPhase_ == AttackPhase::kCharge || attackPhase_ == AttackPhase::kDash);
+	}
+
 private:
 	// Translateクラス内の関数を使える様にする
 	Transform transform_;

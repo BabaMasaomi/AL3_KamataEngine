@@ -726,27 +726,63 @@ bool GameScene::FindDashTarget(const Vector3& start, float range, float halfWidt
 	return found;
 }
 
+void GameScene::SetDashLockTarget(Enemy* target) {
+	if (lockTarget_ != target) {
+		lockMarkTimer_ = 0.0f;
+	}
+
+	lockTarget_ = target;
+}
+
 void GameScene::UpdateLockMark() {
-	// プレイ中かつ、攻撃を開始できる場合だけ表示
-	if (phase_ != Phase::kPlay || !player_ || !player_->CanStartDash()) {
+	if (phase_ != Phase::kPlay || !player_ || player_->GetIsDead()) {
 
 		ClearLockMark();
 		return;
 	}
 
-	const AABB playerAABB = player_->GetAABB();
-
-	const float halfWidth = (playerAABB.max.x - playerAABB.min.x) / 2.0f;
-	const float halfHeight = (playerAABB.max.y - playerAABB.min.y) / 2.0f;
-
 	Vector3 targetPos = {};
 	Enemy* nextTarget = nullptr;
 
-	// 突進と同じ条件で対象を検索
-	if (!FindDashTarget(player_->GetWorldPos(), player_->GetDashRange(), halfWidth, halfHeight, targetPos, &nextTarget)) {
+	if (player_->ShouldKeepDashLock()) {
+		// 攻撃中は新しい対象を探さず、確定済みの対象を使う
+		nextTarget = lockTarget_;
 
-		ClearLockMark();
-		return;
+		// 敵の削除後にポインターを参照しないよう、
+		// 現在の敵一覧に存在することを先に確認
+		if (!nextTarget || std::find(enemies_.begin(), enemies_.end(), nextTarget) == enemies_.end()) {
+
+			ClearLockMark();
+			return;
+		}
+
+		// 命中すると衝突無効になるので、そのフレームで消す
+		if (nextTarget->GetIsDead() || nextTarget->IsCollisionDisEnabled()) {
+
+			ClearLockMark();
+			return;
+		}
+
+		targetPos = nextTarget->GetWorldPos();
+
+	} else {
+		// 後隙など、次の攻撃を開始できない状態では非表示
+		if (!player_->CanStartDash()) {
+			ClearLockMark();
+			return;
+		}
+
+		const AABB playerAABB = player_->GetAABB();
+
+		const float halfWidth = (playerAABB.max.x - playerAABB.min.x) / 2.0f;
+		const float halfHeight = (playerAABB.max.y - playerAABB.min.y) / 2.0f;
+
+		// 通常時は、これまでどおり対象を探す
+		if (!FindDashTarget(player_->GetWorldPos(), player_->GetDashRange(), halfWidth, halfHeight, targetPos, &nextTarget)) {
+
+			ClearLockMark();
+			return;
+		}
 	}
 
 	if (nextTarget != lockTarget_) {

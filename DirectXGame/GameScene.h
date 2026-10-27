@@ -65,16 +65,6 @@ private:
 	// 敵のリスト
 	std::list<Enemy*> enemies_ = {};
 
-	/*-------------------- 盾敵 --------------------*/
-	//// 敵の3Dモデル
-	//KamataEngine::Model* modelShieldEnemy_ = nullptr;
-
-	//// 敵のワールドトランスフォーム
-	//KamataEngine::WorldTransform worldTransformShieldEnemy_;
-
-	//// 敵のリスト
-	//std::list<ShieldEnemy*> shieldEnemies_ = {};
-
 	/*-------------------- 天球 --------------------*/
 	// 天球の3Dモデル
 	KamataEngine::Model* modelSkydome_ = nullptr;
@@ -184,6 +174,8 @@ public:
 	// 射程内で進路が開いている最も近い敵の座標を取得
 	bool FindDashTarget(const KamataEngine::Vector3& start, float range, float halfWidth, float halfHeight, KamataEngine::Vector3& targetPos, Enemy** targetEnemy = nullptr);
 	
+	void SetDashLockTarget(Enemy* target);
+
 	// エフェクトの生成
 	void CreateHitEffect(KamataEngine::Vector3 pos, HitEffectType type);
 
@@ -192,8 +184,6 @@ public:
 
 	// 総当たり当たり判定
 	void CheckAllCollisions();
-	//// 盾持ちの当たり判定
-	//void CheckAllCollisionsShield();
 
 	// AABB同士の当たり判定
 	bool CheckAABBCollision(const AABB& aabb1, const AABB& aabb2);
