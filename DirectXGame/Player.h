@@ -216,6 +216,7 @@ public:
 private:
 	// Sound data is cached across retries.
 	uint32_t attackSoundHandle_ = 0;
+	uint32_t jumpSoundHandle_ = 0;
 
 	// Translateクラス内の関数を使える様にする
 	Transform transform_;

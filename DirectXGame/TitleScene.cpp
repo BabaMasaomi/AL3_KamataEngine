@@ -7,6 +7,9 @@ using namespace KamataEngine;
 /*-------------------- コンストラクタ&デストラクタ --------------------*/
 TitleScene::TitleScene() {}
 TitleScene::~TitleScene() {
+	if (bgmStarted_) {
+		Audio::GetInstance()->StopWave(bgmVoiceHandle_);
+	}
 	delete modelTitle_;  // タイトルフォントの3Dモデルの解放
 	delete skydome_;
 	delete modelSkydome_;
@@ -46,6 +49,10 @@ void TitleScene::Initialize() {
 	fade_ = new Fade();
 	fade_->Initialize();
 	fade_->Start(Fade::Status::FadeIn, 2.0f);
+
+	static const uint32_t titleBgm = Audio::GetInstance()->LoadWave("TitleBGM.mp3");
+	bgmVoiceHandle_ = Audio::GetInstance()->PlayWave(titleBgm, true, 0.6f);
+	bgmStarted_ = true;
 }
 
 /*-------------------- 更新 --------------------*/

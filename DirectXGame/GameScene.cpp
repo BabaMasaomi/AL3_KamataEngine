@@ -53,6 +53,9 @@ bool SegmentHitsRect(const KamataEngine::Vector3& start, const KamataEngine::Vec
 /*-------------------- コンストラクタ&デストラクタ --------------------*/
 GameScene::GameScene() {}
 GameScene::~GameScene() {
+	if (bgmStarted_) {
+		Audio::GetInstance()->StopWave(bgmVoiceHandle_);
+	}
 	delete modelShiji_;
 	delete howToPlaySprite_;
 	delete player_; // プレイヤーの解放
@@ -348,6 +351,10 @@ void GameScene::Initialize() {
 	fade_ = new Fade();
 	fade_->Initialize();
 	fade_->Start(Fade::Status::FadeIn, 0.25f);
+
+	static const uint32_t playBgm = Audio::GetInstance()->LoadWave("PlayBGM.mp3");
+	bgmVoiceHandle_ = Audio::GetInstance()->PlayWave(playBgm, true, 0.6f);
+	bgmStarted_ = true;
 }
 
 /*-------------------- 更新 --------------------*/

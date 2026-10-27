@@ -15,6 +15,8 @@
 
 class GameScene {
 private:
+	uint32_t bgmVoiceHandle_ = 0;
+	bool bgmStarted_ = false;
 
 	// Screen-fixed instructions (1280 x 720).
 	KamataEngine::Model* modelShiji_ = nullptr;

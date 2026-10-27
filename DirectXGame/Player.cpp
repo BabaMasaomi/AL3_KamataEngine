@@ -30,6 +30,8 @@ void Player::Initialize(Model* model, Model* modelAttack, Camera* camera, const 
 
 	static const uint32_t attackSound = Audio::GetInstance()->LoadWave("normalAttack.mp3");
 	attackSoundHandle_ = attackSound;
+	static const uint32_t jumpSound = Audio::GetInstance()->LoadWave("jump.mp3");
+	jumpSoundHandle_ = jumpSound;
 
 	// ワールドトランスフォームの初期化
 	worldTransform_.Initialize();
@@ -263,6 +265,7 @@ void Player::BehaviorRootUpdate() {
 	const bool jumpRequested = Input::GetInstance()->TriggerKey(DIK_UP);
 
 	if (jumpRequested && (onGround_ || canAirJump_)) {
+		Audio::GetInstance()->PlayWave(jumpSoundHandle_, false, 1.0f);
 		// 落下中でも同じ高さへ跳べるように、加算ではなく代入
 		velocity_.y = kJumpAcceleration_;
 
