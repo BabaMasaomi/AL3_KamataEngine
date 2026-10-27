@@ -1,4 +1,4 @@
-﻿#ifndef NOMINMAX
+#ifndef NOMINMAX
 #define NOMINMAX
 #endif
 
@@ -53,6 +53,8 @@ bool SegmentHitsRect(const KamataEngine::Vector3& start, const KamataEngine::Vec
 /*-------------------- コンストラクタ&デストラクタ --------------------*/
 GameScene::GameScene() {}
 GameScene::~GameScene() {
+	delete modelShiji_;
+	delete howToPlaySprite_;
 	delete player_; // プレイヤーの解放
 	delete model_;
 	delete modelAttack_;
@@ -97,6 +99,27 @@ GameScene::~GameScene() {
 ==============================================================*/
 /*-------------------- 初期化 --------------------*/
 void GameScene::Initialize() {
+	// A separate camera keeps the instruction model fixed on screen.
+	instructionCamera_.translation_ = {0.0f, 0.0f, -30.0f};
+	instructionCamera_.Initialize();
+	instructionCamera_.UpdateMatrix();
+	modelShiji_ = Model::CreateFromOBJ("Shiji", true);
+	worldTransformShiji_.Initialize();
+	worldTransformShiji_.scale_ = {2.0f, 2.0f, 2.0f};
+	worldTransformShiji_.translation_ = {0.06f, 9.0f, 0.0f};
+	transform_.worldMatrixUpdate(worldTransformShiji_);
+	instructionTimer_ = 0.0f;
+
+	const uint32_t helpTexture = TextureManager::Load("howToPlay.png");
+	howToPlaySprite_ = Sprite::Create(
+	    helpTexture, {1260.0f, 700.0f},
+	    {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f});
+	const Vector2 helpSize = howToPlaySprite_->GetSize();
+	if (helpSize.x > 0.0f && helpSize.y > 0.0f) {
+		const float ratio = std::min(360.0f / helpSize.x, 180.0f / helpSize.y);
+		howToPlaySprite_->SetSize({helpSize.x * ratio, helpSize.y * ratio});
+	}
+
 	// メンバ変数への代入処理
 	// フェーズをフェードインから開始
 	phase_ = Phase::kFadeIn;
@@ -329,6 +352,9 @@ void GameScene::Initialize() {
 
 /*-------------------- 更新 --------------------*/
 void GameScene::Update() {
+	if (phase_ == Phase::kPlay) {
+		instructionTimer_ = std::min(instructionTimer_ + 1.0f / 60.0f, kInstructionDuration);
+	}
 	// フェーズごとの更新処理
 	switch (phase_) {
 	case ::GameScene::Phase::kFadeIn:
@@ -651,10 +677,24 @@ void GameScene::Draw() {
 		modelLockMark_->Draw(worldTransformLockMark_, camera_);
 	}
 
-	// フェードを更新
-	fade_->Draw();
 
 	Model::PostDraw();
+
+	// Render the instruction above world geometry.
+	if ((phase_ == Phase::kFadeIn || phase_ == Phase::kPlay) &&
+	    instructionTimer_ < kInstructionDuration) {
+		DirectXCommon::GetInstance()->ClearDepthBuffer();
+		Model::PreDraw();
+		modelShiji_->Draw(worldTransformShiji_, instructionCamera_);
+		Model::PostDraw();
+	}
+
+	Sprite::PreDraw();
+	howToPlaySprite_->Draw();
+	Sprite::PostDraw();
+
+	// Fade covers both the world and the instructions.
+	fade_->Draw();
 }
 
 // 移動できる割合

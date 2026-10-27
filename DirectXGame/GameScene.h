@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "CameraController.h"
 #include "DeathParticles.h"
 #include "Enemy.h"
@@ -15,6 +15,14 @@
 
 class GameScene {
 private:
+
+	// Screen-fixed instructions (1280 x 720).
+	KamataEngine::Model* modelShiji_ = nullptr;
+	KamataEngine::WorldTransform worldTransformShiji_;
+	KamataEngine::Camera instructionCamera_;
+	KamataEngine::Sprite* howToPlaySprite_ = nullptr;
+	float instructionTimer_ = 0.0f;
+	static constexpr float kInstructionDuration = 3.0f;
 
 	// ゲームのフェーズ(型)
 	enum class Phase {
