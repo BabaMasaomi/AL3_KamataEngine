@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cassert>
 #include <numbers>
+#include <cmath>
 
 // コンストラクタ&デストラクタ
 Enemy::Enemy() {}
@@ -37,8 +38,18 @@ void Enemy::Initialize(Model* model, Camera* camera, const Vector3 pos) {
 	// 3Dモデルの生成
 	modelEnemy_ = model;
 
-	// 移動速度の初期化
+	// 初期配置位置を往復の中心として保存
+	patrolCenterX_ = pos.x;
+
+	// 最初は左へ進む
 	velocity_ = {-kMoveSpeed, 0.0f, 0.0f};
+
+	worldTransform_.rotation_.y = -std::numbers::pi_v<float> / 2.0f;
+
+	// 旋回していない状態から開始
+	turnStartRotationY_ = worldTransform_.rotation_.y;
+	turnTargetRotationY_ = worldTransform_.rotation_.y;
+	turnTimer_ = 0.0f;
 
 	// アニメーションタイマーの初期化
 	walkTimer_ = 0.0f;
@@ -88,19 +99,60 @@ void Enemy::BehaviorRootInitialize() {}
 
 // 通常行動更新
 void Enemy::BehaviorRootUpdate() {
-	// 移動処理
-	//worldTransform_.translation_.x += velocity_.x;	// 仕様変更とデバッグのため無効化
+	constexpr float deltaTime = 1.0f / 60.0f;
 
-	// 歩行アニメーション処理
-	// タイマーを加算(1/60秒)
-	walkTimer_ += 1.0f / 60.0f;
+	// 初期位置から左右1マス
+	const float leftLimit = patrolCenterX_ - MapChipField::kBlockWidth;
+	const float rightLimit = patrolCenterX_ + MapChipField::kBlockWidth;
 
-	// 回転アニメーション
-	float param = std::sin((walkTimer_ / kWalkMotionTime) * 2.0f * std::numbers::pi_v<float>);
-	float degree = kWalkMotionAngleStart + kWalkMotionAngleEnd * ((param + 1.0f) / 2.0f);
+	// 横移動
+	worldTransform_.translation_.x += velocity_.x;
 
-	// 度をラジアンに変換
-	worldTransform_.rotation_.x = degree * std::numbers::pi_v<float> / 180.0f;
+	bool turned = false;
+
+	if (velocity_.x < 0.0f && worldTransform_.translation_.x <= leftLimit) {
+
+		// 左端を越えないよう補正し、右へ折り返す
+		worldTransform_.translation_.x = leftLimit;
+		velocity_.x = kMoveSpeed;
+		turned = true;
+
+	} else if (velocity_.x > 0.0f && worldTransform_.translation_.x >= rightLimit) {
+
+		// 右端を越えないよう補正し、左へ折り返す
+		worldTransform_.translation_.x = rightLimit;
+		velocity_.x = -kMoveSpeed;
+		turned = true;
+	}
+
+	// 折り返した瞬間だけ、補間の開始値を記録
+	if (turned) {
+		turnStartRotationY_ = worldTransform_.rotation_.y;
+
+		turnTargetRotationY_ = velocity_.x > 0.0f ? std::numbers::pi_v<float> / 2.0f : -std::numbers::pi_v<float> / 2.0f;
+
+		turnTimer_ = kTurnTime;
+	}
+
+	// 進行方向へ滑らかに旋回
+	if (turnTimer_ > 0.0f) {
+		turnTimer_ = std::max(0.0f, turnTimer_ - deltaTime);
+
+		const float t = std::clamp(1.0f - turnTimer_ / kTurnTime, 0.0f, 1.0f);
+
+		const float easeT = t * t * (3.0f - 2.0f * t);
+
+		worldTransform_.rotation_.y = turnStartRotationY_ + (turnTargetRotationY_ - turnStartRotationY_) * easeT;
+	}
+
+	// 既存の歩行アニメーション
+	//walkTimer_ += deltaTime;
+
+	//const float param = std::sin((walkTimer_ / kWalkMotionTime) * 2.0f * std::numbers::pi_v<float>);
+
+	//const float degree = kWalkMotionAngleStart + (kWalkMotionAngleEnd - kWalkMotionAngleStart) * ((param + 1.0f) / 2.0f);
+
+	//worldTransform_.rotation_.x = degree * std::numbers::pi_v<float> / 180.0f;
 }
 
 // 死亡アクション初期化

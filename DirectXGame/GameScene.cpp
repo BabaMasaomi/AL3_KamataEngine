@@ -195,29 +195,6 @@ void GameScene::Initialize() {
 	// マップチップデータのセット
 	// enemies_->SetMapChipField(mapChipField_);		// マップチップと当たり判定を取る時に必要
 
-	/*--------------- 盾敵 ---------------*/
-	//// 盾敵の3Dモデルの生成
-	// modelShieldEnemy_ = Model::CreateFromOBJ("shieldEnemy", true);
-
-	//// 盾敵のワールドトランスフォームの初期化
-	// worldTransformShieldEnemy_.Initialize();
-
-	// for (int32_t i = 0; i < 3; i++) {
-	//	// 盾敵の生成
-	//	ShieldEnemy* newShieldEnemy = new ShieldEnemy();
-
-	//	// 座標をマップチップ番号で指定
-	//	Vector3 shieldEnemyPos = mapChipField_->GetMapChipPositionByIndex(40 + i * 5, 18);
-
-	//	// 盾敵の初期化
-	//	newShieldEnemy->Initialize(modelShieldEnemy_, &camera_, shieldEnemyPos);
-	//	// リストに追加
-	//	shieldEnemies_.push_back(newShieldEnemy);
-
-	//	// 盾敵にゲームシーンを渡す
-	//	newShieldEnemy->SetGameScene(this);
-	//}
-
 	/*--------------- 天球 ---------------*/
 	// 天球の3Dモデルの生成
 	modelSkydome_ = Model::CreateFromOBJ("skydome", true);
@@ -291,7 +268,7 @@ void GameScene::Initialize() {
 	HitEffect::SetCamera(&camera_);
 
 	/*--------------- ロックマーク ---------------*/
-	modelLockMark_ = Model::CreateFromOBJ("ring", true);
+	modelLockMark_ = Model::CreateFromOBJ("lockMark", true);
 
 	worldTransformLockMark_.Initialize();
 	worldTransformLockMark_.rotation_ = {0.0f, 0.0f, 0.0f};
@@ -347,7 +324,7 @@ void GameScene::Initialize() {
 	/*--------------- フェード ---------------*/
 	fade_ = new Fade();
 	fade_->Initialize();
-	fade_->Start(Fade::Status::FadeIn, 1.0f);
+	fade_->Start(Fade::Status::FadeIn, 0.25f);
 }
 
 /*-------------------- 更新 --------------------*/
@@ -952,17 +929,19 @@ void GameScene::ChangePhase() {
 
 		// 死亡時
 		if (player_->GetIsDead()) {
-			// 死亡演出フェーズに切り替え
-			phase_ = GameScene::Phase::kDeath;
+			isClear_ = false;
+			ClearLockMark();
 
-			// 自キャラの座標を取得
+			phase_ = Phase::kDeath;
+
+			// 死亡した位置を保存
 			const Vector3 deathParticlesPosition = player_->GetWorldPos();
 
-			// 自機の座標を飛ばす	(強硬策だと思うので後で修正)
+			// 既存のプレイヤー非表示処理
 			player_->SetWorldPos({-100.0f, -100.0f, -100.0f});
 			player_->Update();
 
-			// 自キャラの座標にパーティクルをセット
+			// 死亡演出を生成
 			deathParticles_ = new DeathParticles();
 			deathParticles_->Initialize(modelParticles_, &camera_, deathParticlesPosition);
 		}
@@ -991,8 +970,13 @@ void GameScene::ChangePhase() {
 
 	case GameScene::Phase::kFadeOut:
 		if (fade_->IsFinished()) {
-			// 終了フラグを立てる
-			finished_ = true;
+			if (isClear_) {
+				// クリア時は、従来どおりクリアシーンへ
+				finished_ = true;
+			} else {
+				// 死亡時は、ステージを作り直す
+				retryRequested_ = true;
+			}
 		}
 		break;
 

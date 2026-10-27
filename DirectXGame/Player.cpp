@@ -593,11 +593,6 @@ void Player::BehaviorKnockBackUpdate() {
 void Player::Draw() {
 	// 自機を描画
 	model_->Draw(worldTransform_, *camera_);
-
-	// 攻撃エフェクトを描画
-	if (isAttackEffect_) {
-		modelAttack_->Draw(worldTransformAttack_, *camera_);
-	}
 }
 
 /// <summary>

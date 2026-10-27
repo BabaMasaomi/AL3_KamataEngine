@@ -69,7 +69,7 @@ public:
 	/// 敵の衝突判定処理
 	/// </summary>
 	/// <param name="player">自機の情報</param>
-	void OnCollisionPlayer(Player* player);
+	void OnCollisionPlayer	(Player* player);
 
 	// 当たり判定が無効化されているか
 	bool IsCollisionDisEnabled() const;
@@ -101,6 +101,16 @@ private:
 
 	// 基礎移動速度
 	static inline const float kMoveSpeed = 0.05f;
+
+	// 往復移動の中心となる初期配置位置
+	float patrolCenterX_ = 0.0f;
+
+	// 方向転換時の回転補間
+	float turnStartRotationY_ = 0.0f;
+	float turnTargetRotationY_ = 0.0f;
+	float turnTimer_ = 0.0f;
+	// 転換の所要時間
+	static constexpr float kTurnTime = 0.2f;
 
 	// 敵の当たり判定サイズ
 	static inline const float kWidth = 1.6f;

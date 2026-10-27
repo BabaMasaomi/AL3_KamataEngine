@@ -323,7 +323,7 @@ private:
 
 	// 攻撃終了後の落下猶予
 	float fallDelayTimer_ = 0.0f;
-	static constexpr float kFallDelayTime = 0.15f;
+	static constexpr float kFallDelayTime = 0.55f;
 
 	// 攻撃時のスケール
 	const KamataEngine::Vector3 normalScale_ = {2.0f, 2.0f, 2.0f};
