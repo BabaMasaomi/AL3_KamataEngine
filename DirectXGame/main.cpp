@@ -43,7 +43,7 @@ void DrawScene();
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// エンジンの初期化
-	Initialize(L"LE2B_22_ババ_マサオミ_AL4_1回目");
+	Initialize(L"LE2B_22_ババ_マサオミ_跳ねろ突撃マン");
 
 	// DirectXCommonインスタンスを取得(画面描画に使用)
 	DirectXCommon* dxCoommon = DirectXCommon::GetInstance();

@@ -27,6 +27,7 @@ public:
 	bool GetIsFinished() const { return finished_; }
 
 private:
+	KamataEngine::Sprite* startGameSprite_ = nullptr;
 	uint32_t bgmVoiceHandle_ = 0;
 	bool bgmStarted_ = false;
 	uint32_t selectSoundHandle_ = 0;

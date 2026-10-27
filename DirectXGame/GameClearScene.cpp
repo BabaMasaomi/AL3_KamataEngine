@@ -7,6 +7,8 @@ using namespace KamataEngine;
 /*-------------------- コンストラクタ&デストラクタ --------------------*/
 GameClearScene::GameClearScene() {}
 GameClearScene::~GameClearScene() {
+	delete creditSprite_;
+	delete returnToTitleSprite_;
 	if (resultBgmStarted_) {
 		Audio::GetInstance()->StopWave(resultVoiceHandle_);
 	}
@@ -23,6 +25,19 @@ void GameClearScene::Initialize() {
 	static const uint32_t resultSound = Audio::GetInstance()->LoadWave("ResultBGM.mp3");
 	resultSoundHandle_ = resultSound;
 
+	// Screen-fixed credits, right aligned with a 24-pixel margin.
+	const uint32_t creditTexture = TextureManager::Load("Cledit.png");
+	creditSprite_ = Sprite::Create(creditTexture, {1256.0f, 500.0f},
+	    {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.5f});
+	creditSprite_->SetSize({512.0f, 512.0f});
+
+	// Place the text strip below the left-side player.
+	const uint32_t returnTexture = TextureManager::Load("returnToTitle.png");
+	returnToTitleSprite_ = Sprite::Create(returnTexture, {466.0f, 640.0f},
+	    {1.0f, 1.0f, 1.0f, 1.0f}, {0.5f, 0.5f});
+	returnToTitleSprite_->SetTextureRect({0.0f, 224.0f}, {700.0f, 72.0f});
+	returnToTitleSprite_->SetSize({560.0f, 57.6f});
+
 	// カメラ初期化
 	camera_.farZ = 550.0f;
 	camera_.Initialize();
@@ -37,13 +52,13 @@ void GameClearScene::Initialize() {
 	// ゲームクリア用フォントのモデル
 	modelGameClear_ = Model::CreateFromOBJ("clearFont", true); // ゲームクリアフォントの3Dモデルを生成
 	worldTransformGameClear_.Initialize();                     // ゲームクリアのワールドトランスフォームの初期化
-	worldTransformGameClear_.translation_ = {0.0f, 5.0f, 0.0f};
+	worldTransformGameClear_.translation_ = {0.0f, 8.0f, 0.0f};
 	worldTransformGameClear_.scale_ = {2.0f, 2.0f, 2.0f};
 
 	// プレイヤーのモデル
 	modelPlayer_ = Model::CreateFromOBJ("player", true); // プレイヤーの3Dモデルを生成
 	worldTransformPlayer_.Initialize();                  // プレイヤーのワールドトランスフォームの初期化
-	worldTransformPlayer_.translation_ = {0.0f, -10.0f, 0.0f};
+	worldTransformPlayer_.translation_ = {-10.0f, -10.0f, 0.0f};
 	worldTransformPlayer_.scale_ = {6.0f, 6.0f, 6.0f};
 
 	// フェード用
@@ -111,8 +126,13 @@ void GameClearScene::Draw() {
 	modelGameClear_->Draw(worldTransformGameClear_, camera_);
 	modelPlayer_->Draw(worldTransformPlayer_, camera_);
 
-	// フェードを描画
-	fade_->Draw();
-
 	Model::PostDraw();
+
+	Sprite::PreDraw();
+	creditSprite_->Draw();
+	returnToTitleSprite_->Draw();
+	Sprite::PostDraw();
+
+	// Fade covers the credits as well.
+	fade_->Draw();
 }

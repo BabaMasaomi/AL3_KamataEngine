@@ -27,6 +27,8 @@ public:
 	bool GetIsFinished() const { return finished_; }
 
 private:
+	KamataEngine::Sprite* creditSprite_ = nullptr;
+	KamataEngine::Sprite* returnToTitleSprite_ = nullptr;
 	uint32_t resultSoundHandle_ = 0;
 	uint32_t resultVoiceHandle_ = 0;
 	bool resultBgmStarted_ = false;

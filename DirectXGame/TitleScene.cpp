@@ -7,6 +7,7 @@ using namespace KamataEngine;
 /*-------------------- コンストラクタ&デストラクタ --------------------*/
 TitleScene::TitleScene() {}
 TitleScene::~TitleScene() {
+	delete startGameSprite_;
 	if (bgmStarted_) {
 		Audio::GetInstance()->StopWave(bgmVoiceHandle_);
 	}
@@ -21,6 +22,13 @@ TitleScene::~TitleScene() {
 void TitleScene::Initialize() {
 	static const uint32_t selectSound = Audio::GetInstance()->LoadWave("select.mp3");
 	selectSoundHandle_ = selectSound;
+
+	// Display the central text strip below the player.
+	const uint32_t startTexture = TextureManager::Load("startGame.png");
+	startGameSprite_ = Sprite::Create(startTexture, {640.0f, 640.0f},
+	    {1.0f, 1.0f, 1.0f, 1.0f}, {0.5f, 0.5f});
+	startGameSprite_->SetTextureRect({0.0f, 224.0f}, {512.0f, 64.0f});
+	startGameSprite_->SetSize({512.0f, 64.0f});
 
 	// カメラ初期化
 	camera_.farZ = 550.0f;
@@ -116,8 +124,12 @@ void TitleScene::Draw() {
 	modelTitle_->Draw(worldTransformTitle_, camera_);
 	modelPlayer_->Draw(worldTransformPlayer_, camera_);
 
-	// フェードを描画
-	fade_->Draw();
-
 	Model::PostDraw();
+
+	Sprite::PreDraw();
+	startGameSprite_->Draw();
+	Sprite::PostDraw();
+
+	// Fade covers the start prompt too.
+	fade_->Draw();
 }
