@@ -27,6 +27,10 @@ public:
 	bool GetIsFinished() const { return finished_; }
 
 private:
+	uint32_t resultSoundHandle_ = 0;
+	uint32_t resultVoiceHandle_ = 0;
+	bool resultBgmStarted_ = false;
+
 	// シーンのフェーズ
 	enum class Phase {
 		kFadeIn,  // フェードイン

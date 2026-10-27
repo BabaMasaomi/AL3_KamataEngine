@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "CameraController.h"
 #include "KamataEngine.h"
 #include "Player.h"
@@ -27,6 +27,8 @@ public:
 	bool GetIsFinished() const { return finished_; }
 
 private:
+	uint32_t selectSoundHandle_ = 0;
+
 	// シーンのフェーズ
 	enum class Phase {
 		kFadeIn,	// フェードイン

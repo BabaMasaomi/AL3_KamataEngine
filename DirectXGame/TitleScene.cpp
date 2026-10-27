@@ -1,4 +1,4 @@
-﻿#include "TitleScene.h"
+#include "TitleScene.h"
 #include <numbers>
 
 // KamataEngine::を毎回入力しなくてもいい様にする
@@ -16,6 +16,8 @@ TitleScene::~TitleScene() {
 
 /*-------------------- 初期化 --------------------*/
 void TitleScene::Initialize() {
+	static const uint32_t selectSound = Audio::GetInstance()->LoadWave("select.mp3");
+	selectSoundHandle_ = selectSound;
 
 	// カメラ初期化
 	camera_.farZ = 550.0f;
@@ -58,6 +60,7 @@ void TitleScene::Update() {
 	case TitleScene::Phase::kMain:
 		// シーン切り替え
 		if (Input::GetInstance()->TriggerKey(DIK_SPACE)) {
+			Audio::GetInstance()->PlayWave(selectSoundHandle_, false, 1.0f);
 			fade_->Start(Fade::Status::FadeOut, 1.0f);
 			phase_ = Phase::kFadeOut;
 		}		

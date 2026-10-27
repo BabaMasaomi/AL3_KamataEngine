@@ -1,4 +1,4 @@
-﻿#define NOMINMAX
+#define NOMINMAX
 #include "Player.h"
 #include "Enemy.h"
 #include "GameScene.h"
@@ -27,6 +27,9 @@ void Player::Initialize(Model* model, Model* modelAttack, Camera* camera, const 
 
 	// 引き数の内容をメンバ変数に記録
 	camera_ = camera;
+
+	static const uint32_t attackSound = Audio::GetInstance()->LoadWave("normalAttack.mp3");
+	attackSoundHandle_ = attackSound;
 
 	// ワールドトランスフォームの初期化
 	worldTransform_.Initialize();
@@ -368,6 +371,7 @@ void Player::BehaviorAttackUpdate() {
 
 		if (chargeTimer_ >= kChargeTime_) {
 			attackPhase_ = AttackPhase::kDash;
+			Audio::GetInstance()->PlayWave(attackSoundHandle_, false, 1.0f);
 			isAttackEffect_ = true;
 
 			// 突進開始で一気に伸ばす

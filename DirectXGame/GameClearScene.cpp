@@ -7,6 +7,10 @@ using namespace KamataEngine;
 /*-------------------- コンストラクタ&デストラクタ --------------------*/
 GameClearScene::GameClearScene() {}
 GameClearScene::~GameClearScene() {
+	if (resultBgmStarted_) {
+		Audio::GetInstance()->StopWave(resultVoiceHandle_);
+	}
+
 	delete modelGameClear_;  // ゲームクリアフォントの3Dモデルの解放
 	delete skydome_;
 	delete modelSkydome_;
@@ -16,6 +20,8 @@ GameClearScene::~GameClearScene() {
 
 /*-------------------- 初期化 --------------------*/
 void GameClearScene::Initialize() {
+	static const uint32_t resultSound = Audio::GetInstance()->LoadWave("ResultBGM.mp3");
+	resultSoundHandle_ = resultSound;
 
 	// カメラ初期化
 	camera_.farZ = 550.0f;
@@ -44,6 +50,9 @@ void GameClearScene::Initialize() {
 	fade_ = new Fade();
 	fade_->Initialize();
 	fade_->Start(Fade::Status::FadeIn, 2.0f);
+
+	resultVoiceHandle_ = Audio::GetInstance()->PlayWave(resultSoundHandle_, false, 1.0f);
+	resultBgmStarted_ = true;
 }
 
 /*-------------------- 更新 --------------------*/
