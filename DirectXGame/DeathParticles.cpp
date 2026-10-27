@@ -1,85 +1,78 @@
-﻿#include "DeathParticles.h"
-#include <algorithm>
+﻿#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 
-// を毎回入力しなくてもいい様にする
+#include "DeathParticles.h"
+#include <cmath>
+#include <algorithm>
+#include <cassert>
+
 using namespace KamataEngine;
 
 void DeathParticles::Initialize(Model* model, Camera* camera, const Vector3 pos) {
-	// ぬるぽチェック
-	assert(model);
 
-	// 引き数の内容をメンバ変数に記録
+	assert(model);
+	assert(camera);
+
+	model_ = model;
 	camera_ = camera;
 
-	// ワールド変換の初期化
-	for (WorldTransform& worldTransform : worldTransforms_) {
-		worldTransform.Initialize();
-		worldTransform.scale_ = {2, 2, 2};
-		worldTransform.translation_ = pos;
-	}
+	isFinished_ = false;
+	counter_ = 0.0f;
 
-	// 色操作用の変数
+	worldTransform_.Initialize();
+
+	// 死亡したプレイヤーの中心から広がる
+	worldTransform_.translation_ = pos;
+	worldTransform_.translation_.z -= kFrontOffset;
+
+	worldTransform_.rotation_ = {0.0f, 0.0f, 0.0f};
+	worldTransform_.scale_ = {
+	    kStartScale,
+	    kStartScale,
+	    1.0f,
+	};
+
 	objectColor_.Initialize();
 	color_ = {1.0f, 1.0f, 1.0f, 1.0f};
+	objectColor_.SetColor(color_);
 
-	// 3Dモデルの生成
-	model_ = model;
+	// 生成したフレームから正しい位置に描画する
+	transform_.worldMatrixUpdate(worldTransform_);
 }
 
 void DeathParticles::Update() {
-	// 終了
 	if (isFinished_) {
 		return;
 	}
 
-	//  経過時間を加算
-	counter_ += 1.0f / 60.0f;
+	counter_ = std::min(counter_ + 1.0f / 60.0f, kLifeTime);
 
-	// 存続時間を越えたら終了
-	if (counter_ >= kParticleLifeTime) {
-		isFinished_ = true;
-		return;
-	}
+	const float t = std::clamp(counter_ / kLifeTime, 0.0f, 1.0f);
 
-	// 色の変更 (徐々に透明にする)
-	color_.w = std::clamp(1.0f - (counter_ / kParticleLifeTime), 0.0f, 1.0f);
+	// 最初は速く広がり、終わりに向けて減速する
+	const float easedT = 1.0f - (1.0f - t) * (1.0f - t);
+
+	const float scale = kStartScale + (kEndScale - kStartScale) * easedT;
+
+	worldTransform_.scale_ = {scale, scale, 1.0f};
+
+	// 拡大しながら透明になる
+	color_.w = 1.0f - t;
 	objectColor_.SetColor(color_);
 
-	// パーティクルの移動
-	for (uint32_t i = 0; i < kNumParticles; ++i) {
-		// 基本となる速度ベクトル
-		Vector3 velocity = {kParticleMoveSpeed, 0.0f, 0.0f};
+	transform_.worldMatrixUpdate(worldTransform_);
 
-		// 回転角を計算する
-		float angle = kParticleAngleDivide * static_cast<float>(i);
-
-		// Z回転行列を作成する
-		Matrix4x4 rotZMatrix = transform_.MakeRotateZMatrix(angle);
-
-		// 基本ベクトルを回転させて速度ベクトルを求める (要修正)
-		velocity = transform_.TransformNormal(velocity, rotZMatrix);
-
-		// 移動処理
-		worldTransforms_[i].translation_.x += velocity.x;
-		worldTransforms_[i].translation_.y += velocity.y;
-		worldTransforms_[i].translation_.z += velocity.z;
-	}
-
-	// ワールド変換の更新(範囲for文で行うゾ)
-	for (WorldTransform& worldTransform : worldTransforms_) {
-		// 行列を定数バッファに転送
-		transform_.worldMatrixUpdate(worldTransform);
+	if (counter_ >= kLifeTime) {
+		isFinished_ = true;
 	}
 }
 
 void DeathParticles::Draw() {
-	// 終了
 	if (isFinished_) {
 		return;
 	}
 
-	// パーティクルを描画
-	for (WorldTransform& worldTransform : worldTransforms_) {
-		model_->Draw(worldTransform, *camera_, &objectColor_);
-	}
+	// リングを1つだけ描画
+	model_->Draw(worldTransform_, *camera_, &objectColor_);
 }

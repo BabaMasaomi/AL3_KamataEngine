@@ -253,7 +253,7 @@ void GameScene::Initialize() {
 
 	/*--------------- パーティクル ---------------*/
 	// パーティクルの3Dモデルの生成
-	modelParticles_ = Model::CreateFromOBJ("deathParticle", true);
+	modelParticles_ = Model::CreateFromOBJ("ring", true);
 
 	// パーティクルのワールドトランスフォームの初期化
 	worldTransformPlayer_.Initialize();

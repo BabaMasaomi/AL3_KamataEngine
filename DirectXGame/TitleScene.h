@@ -2,6 +2,7 @@
 #include "CameraController.h"
 #include "KamataEngine.h"
 #include "Player.h"
+#include "Skydome.h"
 #include "Fade.h"
 #include "Transform.h"
 #include <vector>
@@ -61,6 +62,16 @@ private:
 
 	// プレイヤー
 	Player* player_ = nullptr;
+
+	/*-------------------- 天球 --------------------*/
+	// 天球の3Dモデル
+	KamataEngine::Model* modelSkydome_ = nullptr;
+
+	// 天球のワールドトランスフォーム
+	KamataEngine::WorldTransform worldTransformSkydome_;
+
+	// 天球
+	Skydome* skydome_ = nullptr;
 
 	/*-------------------- カメラ --------------------*/
 	// カメラ

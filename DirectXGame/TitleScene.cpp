@@ -8,6 +8,8 @@ using namespace KamataEngine;
 TitleScene::TitleScene() {}
 TitleScene::~TitleScene() {
 	delete modelTitle_;  // タイトルフォントの3Dモデルの解放
+	delete skydome_;
+	delete modelSkydome_;
 	delete modelPlayer_; // プレイヤーの3Dモデルの解放
 	delete fade_;        // フェードの解放
 }
@@ -18,6 +20,13 @@ void TitleScene::Initialize() {
 	// カメラ初期化
 	camera_.farZ = 550.0f;
 	camera_.Initialize();
+
+	// 天球の生成
+	modelSkydome_ = Model::CreateFromOBJ("skydome", true);
+
+	skydome_ = new Skydome();
+	skydome_->Initialize(modelSkydome_, &camera_);
+	skydome_->Update();
 
 	// タイトル用フォントのモデル
 	modelTitle_ = Model::CreateFromOBJ("titleFont", true); // タイトルフォントの3Dモデルを生成
@@ -79,6 +88,9 @@ void TitleScene::Update() {
 	transform_.worldMatrixUpdate(worldTransformPlayer_);
 	camera_.UpdateMatrix();
 
+	// 天球の更新
+	skydome_->Update();
+
 	// フェードを更新
 	fade_->Update();
 }
@@ -86,6 +98,9 @@ void TitleScene::Update() {
 /*-------------------- 描画 --------------------*/
 void TitleScene::Draw() {
 	Model::PreDraw();
+
+	// 背景
+	skydome_->Draw();
 
 	// モデルを描画
 	modelTitle_->Draw(worldTransformTitle_, camera_);

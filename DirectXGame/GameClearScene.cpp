@@ -8,6 +8,8 @@ using namespace KamataEngine;
 GameClearScene::GameClearScene() {}
 GameClearScene::~GameClearScene() {
 	delete modelGameClear_;  // ゲームクリアフォントの3Dモデルの解放
+	delete skydome_;
+	delete modelSkydome_;
 	delete modelPlayer_; // プレイヤーの3Dモデルの解放
 	delete fade_;        // フェードの解放
 }
@@ -18,6 +20,13 @@ void GameClearScene::Initialize() {
 	// カメラ初期化
 	camera_.farZ = 550.0f;
 	camera_.Initialize();
+
+	// 天球の生成
+	modelSkydome_ = Model::CreateFromOBJ("skydome", true);
+
+	skydome_ = new Skydome();
+	skydome_->Initialize(modelSkydome_, &camera_);
+	skydome_->Update();
 
 	// ゲームクリア用フォントのモデル
 	modelGameClear_ = Model::CreateFromOBJ("clearFont", true); // ゲームクリアフォントの3Dモデルを生成
@@ -75,6 +84,9 @@ void GameClearScene::Update() {
 	transform_.worldMatrixUpdate(worldTransformPlayer_);
 	camera_.UpdateMatrix();
 
+	// 天球の更新
+	skydome_->Update();
+
 	// フェードを更新
 	fade_->Update();
 }
@@ -82,6 +94,9 @@ void GameClearScene::Update() {
 /*-------------------- 描画 --------------------*/
 void GameClearScene::Draw() {
 	Model::PreDraw();
+
+	// 背景
+	skydome_->Draw();
 
 	// モデルを描画
 	modelGameClear_->Draw(worldTransformGameClear_, camera_);
