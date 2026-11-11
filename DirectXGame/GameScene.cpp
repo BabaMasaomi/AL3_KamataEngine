@@ -173,10 +173,37 @@ void GameScene::Initialize() {
 	// 追従対象をセット
 	camaraController_->SetTarget(player_);
 
-	// 移動範囲を指定
-	camaraController_->SetMovableArea(CameraController::Rect{20.0f, 180.0f, 10.0f, 200.0f});
+	// まずプレイヤーに合わせてカメラの初期位置を設定
+	camaraController_->Reset();
 
-	// リセット(瞬間合わせ)
+	// マップの上下端
+	const float blockHeight = MapChipField::kBlockHeight;
+	const float mapHeight = blockHeight * MapChipField::kNumBlockVertical;
+
+	const float mapBottom = -blockHeight / 2.0f;
+	const float mapTop = mapBottom + mapHeight;
+
+	// マップ中心面（Z=0）までの距離
+	const float cameraDistance = std::abs(camera_.translation_.z);
+
+	// 画面に映る高さの半分
+	const float viewHalfHeight = cameraDistance * std::tan(camera_.fovAngleY / 2.0f);
+
+	// 画面がマップの上下にはみ出さないカメラ中心の範囲
+	float cameraBottom = mapBottom + viewHalfHeight;
+	float cameraTop = mapTop - viewHalfHeight;
+
+	// マップが画面より低い場合は、縦方向を中央に固定
+	if (cameraBottom > cameraTop) {
+		const float mapCenterY = (mapBottom + mapTop) / 2.0f;
+		cameraBottom = mapCenterY;
+		cameraTop = mapCenterY;
+	}
+
+	// 移動範囲を指定(横方向は現在の設定を維持)
+	camaraController_->SetMovableArea(CameraController::Rect{20.0f, 180.0f, cameraBottom, cameraTop});
+
+	// 計算した移動範囲を開始位置にも適用
 	camaraController_->Reset();
 
 	// デバッグカメラの生成
