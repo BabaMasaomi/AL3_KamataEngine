@@ -45,9 +45,9 @@ void CameraController::UpdateFollow() {
 	const Vector3& targetVelocity = target_->GetVeloctiy();
 
 	// 追従対象とオフセットからカメラの座標を計算
-	targetCoordinate.x = targetWorldTransform.translation_.x + targetOffset_.x + targetVelocity.x * kVelocityBias;
-	targetCoordinate.y = targetWorldTransform.translation_.y + targetOffset_.y + targetVelocity.y * kVelocityBias;
-	targetCoordinate.z = targetWorldTransform.translation_.z + targetOffset_.z + targetVelocity.z * kVelocityBias;
+	targetCoordinate.x = targetWorldTransform.translation_.x + targetOffset_.x + targetVelocity.x * kVelocityBiasX;
+	targetCoordinate.y = targetWorldTransform.translation_.y + targetOffset_.y + targetVelocity.y * kVelocityBiasY;
+	targetCoordinate.z = targetWorldTransform.translation_.z + targetOffset_.z + targetVelocity.z * kVelocityBiasZ;
 
 	// 座標補間でゆったり追従
 	camera_->translation_.x = std::lerp(camera_->translation_.x, targetCoordinate.x, kInterpolationRate);
@@ -69,8 +69,15 @@ void CameraController::Reset() {
 	// 追従対象のワールドトランスフォームを参照
 	const WorldTransform& targetWorldTransform = target_->GetWorldTransform();
 
-	// 追従対象とオフセットからカメラの座標を計算
+	// プレイヤーに合わせる
 	camera_->translation_.x = targetWorldTransform.translation_.x + targetOffset_.x;
 	camera_->translation_.y = targetWorldTransform.translation_.y + targetOffset_.y;
 	camera_->translation_.z = targetWorldTransform.translation_.z + targetOffset_.z;
+
+	// 通常更新と同じ移動範囲を適用
+	camera_->translation_.x = std::clamp(camera_->translation_.x, movableArea_.left, movableArea_.right);
+	camera_->translation_.y = std::clamp(camera_->translation_.y, movableArea_.bottom, movableArea_.top);
+
+	// 初期位置を描画へ反映
+	camera_->UpdateMatrix();
 }
