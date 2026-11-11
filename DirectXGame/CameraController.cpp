@@ -2,11 +2,16 @@
 #include "CameraController.h"
 #include "Player.h"
 #include <algorithm>
+#include <numbers>
 
 // KamataEngine::を毎回入力しなくてもいい様にする
 using namespace KamataEngine;
 
 void CameraController::Initialize(Camera* camera) {
+
+	// カメラの向きを真上からの見下ろしに固定
+	camera->rotation_ = {std::atan2(targetOffset_.y, -targetOffset_.z), 0.0f, 0.0f};
+
 	// 引き数の内容をメンバ変数に記録
 	camera_ = camera;
 }
@@ -52,6 +57,7 @@ void CameraController::UpdateFollow() {
 	// 座標補間でゆったり追従
 	camera_->translation_.x = std::lerp(camera_->translation_.x, targetCoordinate.x, kInterpolationRate);
 	camera_->translation_.y = std::lerp(camera_->translation_.y, targetCoordinate.y, kInterpolationRate);
+	camera_->translation_.z = std::lerp(camera_->translation_.z, targetCoordinate.z, kInterpolationRate);
 
 	// 追従対象が画面外に出ない様に補正
 	camera_->translation_.x = std::max(camera_->translation_.x, targetWorldTransform.translation_.x + cameraMovementMargin.left);
@@ -61,9 +67,7 @@ void CameraController::UpdateFollow() {
 }
 
 // 強制スクロールの更新
-void CameraController::UpdateForcedScroll() {
-	camera_->translation_.x += forceScrollSpeed_;
-}
+void CameraController::UpdateForcedScroll() { camera_->translation_.x += forceScrollSpeed_; }
 
 void CameraController::Reset() {
 	// 追従対象のワールドトランスフォームを参照

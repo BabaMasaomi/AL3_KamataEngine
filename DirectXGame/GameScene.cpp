@@ -55,7 +55,7 @@ void GameScene::Initialize() {
 	mapChipField_ = new MapChipField;
 
 	// ファイル読み込み
-	mapChipField_->LoadMapChipCsv("Resources/block.csv");
+	mapChipField_->LoadMapChipCsv("Resources/map.csv");
 
 	// 表示ブロックの生成
 	GenerateBlocks();
@@ -520,7 +520,7 @@ void GameScene::CreateHitEffect(Vector3 pos, HitEffectType type) {
 /*-------------------- 表示ブロックの生成 --------------------*/
 void GameScene::GenerateBlocks() {
 	// 要素数
-	uint32_t kNumBlockVirtical = MapChipField::kNumBlockVirchical;
+	uint32_t kNumBlockVirtical = MapChipField::kNumBlockVertical;
 	uint32_t kNumBlockHorizontal = MapChipField::kNumBlockHorizontal;
 
 	// 要素数を更新する

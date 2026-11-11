@@ -53,7 +53,7 @@ private:
 	Player* target_ = nullptr;
 
 	// 追従対象とカメラの座標の差
-	KamataEngine::Vector3 targetOffset_ = {0.0f, 0.0f, -30.0f};
+	KamataEngine::Vector3 targetOffset_ = {0.0f, 20.0f, -15.0f};
 
 	// カメラの移動範囲
 	Rect movableArea_ = {0.0f, 100.0f, 0.0f, 100.0f};
