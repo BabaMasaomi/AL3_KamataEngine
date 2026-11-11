@@ -176,13 +176,14 @@ void Player::BehaviorRootUpdate() {
 	/*========== ①移動入力 ==========*/
 	// 接地している時
 	if (onGround_) {
-		// 移動入力
-		if (Input::GetInstance()->PushKey(DIK_RIGHT) || Input::GetInstance()->PushKey(DIK_LEFT)) {
+		// 左右移動入力
+		if (Input::GetInstance()->PushKey(DIK_D) || Input::GetInstance()->PushKey(DIK_A) || 
+			Input::GetInstance()->PushKey(DIK_W) || Input::GetInstance()->PushKey(DIK_S)) {
 			// 加速
 			Vector3 acceleration = {};
 
 			// 左右移動
-			if (Input::GetInstance()->PushKey(DIK_RIGHT)) {
+			if (Input::GetInstance()->PushKey(DIK_D)) {
 				// 速度と逆方向の時は急ブレーキ
 				if (velocity_.x < 0.0f) {
 					velocity_.x *= (1.0f - kAttenuation);
@@ -201,7 +202,7 @@ void Player::BehaviorRootUpdate() {
 					turnTimer_ = kTimeTurn;
 				}
 
-			} else if (Input::GetInstance()->PushKey(DIK_LEFT)) {
+			} else if (Input::GetInstance()->PushKey(DIK_A)) {
 				// 速度と逆方向の時は急ブレーキ
 				if (velocity_.x > 0.0f) {
 					velocity_.x *= (1.0f - kAttenuation);
@@ -227,9 +228,56 @@ void Player::BehaviorRootUpdate() {
 			// 最大速度制限
 			velocity_.x = std::clamp(velocity_.x, -kLimitRunSpeed, kLimitRunSpeed);
 
+			// 前後移動
+			if (Input::GetInstance()->PushKey(DIK_W)) {
+				// 速度と逆方向の時は急ブレーキ
+				if (velocity_.z < 0.0f) {
+					velocity_.z *= (1.0f - kAttenuation);
+				}
+
+				// 右移動
+				acceleration.z += kAcceleration;
+
+				// 体を右に
+				if (lrDirection_ != LRDirection::kRight) {
+					lrDirection_ = LRDirection::kRight;
+					// 旋回開始時の角度を記録
+					turnFirstRotationY_ = worldTransform_.rotation_.y;
+
+					// 旋回タイマーをリセット
+					turnTimer_ = kTimeTurn;
+				}
+
+			} else if (Input::GetInstance()->PushKey(DIK_S)) {
+				// 速度と逆方向の時は急ブレーキ
+				if (velocity_.z > 0.0f) {
+					velocity_.z *= (1.0f - kAttenuation);
+				}
+
+				// 左移動
+				acceleration.z -= kAcceleration;
+
+				// 体を左に
+				if (lrDirection_ != LRDirection::kLeft) {
+					lrDirection_ = LRDirection::kLeft;
+					// 旋回開始時の角度を記録
+					turnFirstRotationY_ = worldTransform_.rotation_.y;
+
+					// 旋回タイマーをリセット
+					turnTimer_ = kTimeTurn;
+				}
+			}
+
+			// 加速/減速
+			velocity_.z += acceleration.z;
+
+			// 最大速度制限
+			velocity_.z = std::clamp(velocity_.z, -kLimitRunSpeed, kLimitRunSpeed);
+
 		} else {
 			// 入力していない時は減速
 			velocity_.x *= (1.0f - kAttenuation);
+			velocity_.z *= (1.0f - kAttenuation);
 		}
 
 		// ジャンプ入力
@@ -655,6 +703,7 @@ void Player::MoveReflectingResult(const CollisionMapInfo& info) {
 	// 移動
 	worldTransform_.translation_.x += info.MovementAmount.x;
 	worldTransform_.translation_.y += info.MovementAmount.y;
+	worldTransform_.translation_.z += info.MovementAmount.z;
 }
 
 // 天井に接触している時の処理

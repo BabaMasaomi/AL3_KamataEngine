@@ -197,6 +197,7 @@ private:
 	KamataEngine::Model* model_ = nullptr;
 
 	// 以下、移動などに使う変数をまとめる
+	// 速度
 	KamataEngine::Vector3 velocity_ = {};
 
 	// 左右移動の加速度
