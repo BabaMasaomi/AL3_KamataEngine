@@ -1,5 +1,6 @@
 ﻿#include "MapChipField.h"
 #include <cassert>
+#include <cmath>
 #include <map>
 // ↓csvファイル読み込みに使うinclude↓
 #include <fstream>
@@ -82,16 +83,31 @@ MapChipType MapChipField::GetMapChipTypeByIndex(uint32_t xIndex, uint32_t yIndex
 }
 
 // マップチップ座標の取得
-Vector3 MapChipField::GetMapChipPositionByIndex(uint32_t xIndex, uint32_t yIndex) { return Vector3(kBlockWidth * xIndex, kBlockHeight * (kNumBlockVertical - 1 - yIndex), 0); }
+Vector3 MapChipField::GetMapChipPositionByIndex(uint32_t xIndex, uint32_t yIndex) {
+	// 既存の設計から、XZ平面用に読み込み方を変更する
+	return Vector3(
+	    kBlockWidth * xIndex,                          // X座標
+	    0,                                             // Y座標
+	    kBlockDepth * (kNumBlockVertical - 1 - yIndex) // Z座標
+	);
+}
 
 // 指定座標のマップチップ番号を取得
 MapChipField::MapChipField::IndexSet MapChipField::GetMapChipIndexSetByPosition(const KamataEngine::Vector3& pos) {
-	IndexSet indexSet = {};
 
-	indexSet.xIndex = (uint32_t)((pos.x + kBlockWidth / 2) / kBlockWidth);
-	indexSet.yIndex = (uint32_t)(kNumBlockVertical /*- 1*/ - ((pos.y + kBlockHeight / 2) / kBlockHeight));
+	const int column = static_cast<int>(std::floor((pos.x + kBlockWidth / 2.0f) / kBlockWidth));
+	const int zIndex = static_cast<int>(std::floor((pos.z + kBlockDepth / 2.0f) / kBlockDepth));
+	const int row = static_cast<int>(kNumBlockVertical) - 1 - zIndex;
+	
+	// 範囲外は有効な添字と区別できる番号を返す
+	if (column < 0 || column >= static_cast<int>(kNumBlockHorizontal) || row < 0 || row >= static_cast<int>(kNumBlockVertical)) {
+		return {kNumBlockHorizontal, kNumBlockVertical};
+	}
 
-	return indexSet;
+	return {
+	    static_cast<uint32_t>(column),
+	    static_cast<uint32_t>(row),
+	};
 }
 
 // 指定マップチップ番号のブロックの範囲を取得
@@ -103,8 +119,8 @@ MapChipField::Rect MapChipField::GetRectByIndex(uint32_t xIndex, uint32_t yIndex
 
 	rect.left = center.x - kBlockWidth / 2.0f;
 	rect.right = center.x + kBlockWidth / 2.0f;
-	rect.bottom = center.y - kBlockHeight / 2.0f;
-	rect.top = center.y + kBlockHeight / 2.0f;
+	rect.bottom = center.z - kBlockDepth / 2.0f;
+	rect.top = center.z + kBlockDepth / 2.0f;
 
 	return rect;
 }

@@ -14,7 +14,8 @@ class ShieldEnemy;
 struct CollisionMapInfo {
 	bool isCeilingCollide = false;             // 天井衝突フラグ
 	bool isLanding = false;                    // 着地フラグ
-	bool isWallCollide = false;                // 壁衝突フラグ
+	bool isWallCollideX = false;                // 壁衝突フラグ
+	bool isWallCollideZ = false;                // 壁衝突フラグ
 	KamataEngine::Vector3 MovementAmount = {}; // 移動量
 };
 
@@ -215,6 +216,9 @@ private:
 	// 左右の向き
 	LRDirection lrDirection_ = LRDirection::kRight;
 
+	// Player.h のメンバー変数
+	float fixedY_ = 0.0f;
+
 	// 接地フラグ
 	bool onGround_ = true;
 
@@ -236,6 +240,7 @@ private:
 	// キャラクターの当たり判定サイズ
 	static inline const float kWidth = 1.6f;
 	static inline const float kHeight = 1.6f;
+	static inline const float kDepth = 1.6f;
 
 	// ブロックとの間にとる余白
 	static inline const float kMargin = 0.05f;
